@@ -1,7 +1,7 @@
 import express from 'express';
 import type { Request, Response } from 'express';
 import { chatController } from './controllers/chat.controller.js';
-import { PrismaClient } from './generated/prisma/client.ts';
+import { PrismaClient } from './generated/prisma';
 
 const router = express.Router();
 
