@@ -8,4 +8,8 @@ export const conversationRepository = {
    setLastResponseId(conversationId: string, responseId: string): void {
       conversations.set(conversationId, responseId);
    },
+
+   logMap() {
+      return conversations.keys();
+   },
 };

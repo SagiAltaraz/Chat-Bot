@@ -1,20 +1,20 @@
 import type { Request, Response } from 'express';
-import e from 'express';
-import { evaluate } from 'mathjs';
-
-type apiResponse = {
-   rates: Record<string, number>;
-};
+import { exchangeService } from '../services/exchange.service';
+import type { ExchangeRate } from '../services/exchange.service';
 
 export const exchangeController = {
    async getExchangeRate(req: Request, res: Response) {
-      const responce = await fetch(
-         'https://api.frankfurter.dev/v1/latest?base=ILS'
-      );
-      const data = (await responce.json()) as apiResponse;
-      const rate = data.rates[`${req.params.target}`];
-      //res.json(evaluate(`1/${rate}`))
-      console.log(rate);
-      res.json({ message: `${evaluate(`1/${rate}`).toFixed(2)} ILS` });
+      const target = String(req.params.target).trim();
+      if (!target || target.length === 0) {
+         return res.status(400).json({ error: 'Target is required' });
+      }
+
+      try {
+         const rate: ExchangeRate =
+            await exchangeService.recieveExchangeRate(target);
+         return res.json({ message: `1 ${rate.target} = ${rate.rate} ILS` });
+      } catch (error) {
+         return res.status(500).json({ error: 'Failed to get exchange rate' });
+      }
    },
 };

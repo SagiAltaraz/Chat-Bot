@@ -26,7 +26,7 @@ export const chatService = {
       });
 
       conversationRepository.setLastResponseId(conversationId, response.id);
-
+      console.log(conversationRepository.logMap());
       return {
          id: response.id,
          massage: response.text,
