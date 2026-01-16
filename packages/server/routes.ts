@@ -6,6 +6,7 @@ import { weatherController } from './controllers/weather.controller.js';
 import { calculateController } from './controllers/calculate.controller.js';
 import { exchangeController } from './controllers/exchange.controller.js';
 import { checkPromptMiddleware } from './middleware/checkPrompt.middleware.js';
+import { chatMessagesController } from './controllers/chatMessages.controller.js';
 
 const router = express.Router();
 
@@ -22,6 +23,8 @@ router.post(
    checkPromptMiddleware.checkPrompt,
    chatController.sendMassage
 );
+
+router.post('/api/getMessages', chatMessagesController.getMessages);
 // router.post('/api/chat', chatController.sendMassage);
 
 router.get('/api/products/:id/reviews', reviewController.getReviews);
