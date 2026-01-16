@@ -1,5 +1,19 @@
 const conversations = new Map<string, string>();
 
+export type Message = {
+   id: string;
+   role: 'user' | 'assistant';
+   content: string;
+};
+
+export type Session = {
+   conversationId: string;
+   messages: {
+      user: Message[];
+      assistant: Message[];
+   };
+};
+
 export const conversationRepository = {
    getLastResponseId(conversationId: string): string | undefined {
       return conversations.get(conversationId);
@@ -7,9 +21,5 @@ export const conversationRepository = {
 
    setLastResponseId(conversationId: string, responseId: string): void {
       conversations.set(conversationId, responseId);
-   },
-
-   logMap() {
-      return conversations.keys();
    },
 };

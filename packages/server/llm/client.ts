@@ -13,7 +13,7 @@ type GenerateTextOptions = {
    previouseResponceId?: string;
 };
 
-type GenerateTextResult = {
+export type GenerateTextResult = {
    id: string;
    text: string;
 };
@@ -35,7 +35,6 @@ export const llmClient = {
          max_output_tokens: maxTokens,
          previous_response_id: previouseResponceId,
       });
-
       return {
          id: response.id,
          text: response.output_text,

@@ -1,7 +1,6 @@
 import type { Request, Response } from 'express';
 import { chatService } from '../services/chat.service';
 import z from 'zod';
-import { log } from 'node:console';
 
 const chatSchema = z.object({
    prompt: z
@@ -23,7 +22,8 @@ export const chatController = {
       try {
          const { prompt, conversationId } = req.body;
          const response = await chatService.sendMessage(prompt, conversationId);
-         res.json({ message: response.content });
+
+         res.json({ message: response.massage });
       } catch (error) {
          res.status(500).json({ error: 'Failed to generate response.' });
       }

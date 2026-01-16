@@ -1,4 +1,5 @@
 import { cache } from '../cache';
+import { cacheKeys } from '../cache/keys.cahce';
 
 type ApiResponce = {
    weather: [
@@ -20,8 +21,7 @@ export type Weather = {
 
 export const weatherService = {
    async recieveWeather(city: string): Promise<Weather> {
-      const cachedWeather = cache.get(`Weather:${city}`);
-      console.log(cachedWeather);
+      const cachedWeather = await getCachedWeather(city);
       if (cachedWeather === null) {
          const weatherApiUrl = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${process.env.WEATHER_API_KEY}&units=metric`;
          const response = await fetch(weatherApiUrl);
@@ -31,8 +31,7 @@ export const weatherService = {
             temperature: data.main.temp,
             city: data.name,
          };
-         cache.set(`Weather:${city}`, weather);
-         setTimeout(() => cache.del(`Weather:${city}`), 1000 * 60 * 60);
+         await setCachedWeather(weather);
          return {
             description: data.weather[0].description,
             temperature: data.main.temp,
@@ -43,3 +42,15 @@ export const weatherService = {
       }
    },
 };
+
+async function getCachedWeather(city: string) {
+   const key = cacheKeys.weather(city);
+   const cached = cache.get(key);
+   if (cached) return cached;
+   return null;
+}
+
+async function setCachedWeather(weather: Weather) {
+   const key = cacheKeys.weather(weather.city);
+   cache.set(key, weather);
+}
