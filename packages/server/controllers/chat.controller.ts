@@ -3,7 +3,7 @@ import { chatService } from '../services/chat.service';
 import { intentService } from '../services/intent.service';
 import { weatherService } from '../services/weather.service';
 import { exchangeService } from '../services/exchange.service';
-import { evaluate } from 'mathjs';
+import { mathTranslatorService } from '../services/math_translator.service';
 import z from 'zod';
 
 const chatSchema = z.object({
@@ -41,49 +41,15 @@ export const chatController = {
                break;
 
             case 'getExchangeRate':
-               {
-                  const from =
-                     typeof parameters?.from === 'string' &&
-                     parameters.from.trim()
-                        ? parameters.from
-                        : parameters?.target
-                          ? 'ILS'
-                          : undefined;
-                  const to =
-                     typeof parameters?.to === 'string' && parameters.to.trim()
-                        ? parameters.to
-                        : parameters?.target;
-                  const amount =
-                     typeof parameters?.amount === 'number'
-                        ? parameters.amount
-                        : undefined;
-
-                  if (to) {
-                     const base = from ?? 'ILS';
-                     const data = await exchangeService.convertCurrency(
-                        base,
-                        to,
-                        amount ?? 1
-                     );
-                     replyMessage =
-                        amount !== undefined
-                           ? `${data.amount} ${data.from} = ${data.result} ${data.to}`
-                           : `1 ${data.from} = ${data.rate} ${data.to}`;
-                  } else {
-                     replyMessage = 'Which currency?';
-                  }
-               }
+               replyMessage =
+                  await exchangeService.convertFromParams(parameters);
                break;
 
             case 'calculate':
-               if (parameters?.equation) {
-                  try {
-                     const result = evaluate(parameters.equation);
-                     replyMessage = `${parameters.equation} = ${result}`;
-                  } catch {
-                     replyMessage = 'Error calculating.';
-                  }
-               }
+               replyMessage = await mathTranslatorService.calculateFromPrompt(
+                  prompt,
+                  parameters?.equation
+               );
                break;
 
             case 'chat':

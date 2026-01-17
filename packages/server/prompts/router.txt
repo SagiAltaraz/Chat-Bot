@@ -70,6 +70,9 @@ Output: { "intent": "calculate", "parameters": { "equation": "(18/3) + 2.5" }, "
 Input: "what is 6 * (7 - 2)"
 Output: { "intent": "calculate", "parameters": { "equation": "6 * (7 - 2)" }, "confidence": 1 }
 
+Input: "Yossi has 5 apples, he ate 2 and bought 10 more. How many does he have?"
+Output: { "intent": "calculate", "parameters": { "equation": null }, "confidence": 1 }
+
 # chat (at least 3)
 Input: "Hi"
 Output: { "intent": "chat", "parameters": null, "confidence": 1 }
