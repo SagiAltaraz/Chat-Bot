@@ -19,9 +19,10 @@ export const intentService = {
       const response = await llmClient.generateText({
          model: 'gpt-4o-mini',
          instructions: routerPrompt,
-         prompt: `User Input: "${userPrompt}"`,
+         prompt: `Return json. User Input: "${userPrompt}"`,
          temperature: 0,
          maxTokens: 300,
+         textFormat: { type: 'json_object' },
       });
 
       try {
