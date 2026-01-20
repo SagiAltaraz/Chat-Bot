@@ -12,7 +12,7 @@ export const mathTranslatorService = {
          instructions: mathTranslatorPrompt,
          prompt: `Input: "${prompt}"`,
          temperature: 0,
-         maxTokens: 300,
+         maxTokens: 200,
       });
 
       try {
