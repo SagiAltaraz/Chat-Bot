@@ -28,6 +28,9 @@ const ChatBot = () => {
       : useRef(crypto.randomUUID());
 
    useEffect(() => {
+      if (!cookies) {
+         return;
+      }
       let ignore = false;
       async function fetchMessages() {
          const cookie = Cookies.get('conversationId');

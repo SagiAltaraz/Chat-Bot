@@ -25,7 +25,6 @@ router.post(
 );
 
 router.post('/api/getMessages', chatMessagesController.getMessages);
-// router.post('/api/chat', chatController.sendMassage);
 
 router.get('/api/products/:id/reviews', reviewController.getReviews);
 router.post(

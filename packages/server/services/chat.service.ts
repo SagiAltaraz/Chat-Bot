@@ -27,7 +27,6 @@ export const chatService = {
       });
 
       const session = await getSession(response, conversationId, prompt);
-
       addMessageToSession(response, session, prompt);
       printSession(session);
       return session.messages.assistant[session.messages.assistant.length - 1];
