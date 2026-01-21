@@ -11,6 +11,9 @@ type GenerateTextOptions = {
    temperature?: number;
    maxTokens?: number;
    previouseResponceId?: string;
+   textFormat?: {
+      type: 'json_object';
+   };
 };
 
 export type GenerateTextResult = {
@@ -26,6 +29,7 @@ export const llmClient = {
       temperature = 0.2,
       maxTokens = 300,
       previouseResponceId,
+      textFormat,
    }: GenerateTextOptions): Promise<GenerateTextResult> {
       const response = await client.responses.create({
          model,
@@ -34,6 +38,9 @@ export const llmClient = {
          temperature,
          max_output_tokens: maxTokens,
          previous_response_id: previouseResponceId,
+         ...(textFormat ? { text: { format: textFormat } } : {}),
+      } as any);
+
       });
       return {
          id: response.id,

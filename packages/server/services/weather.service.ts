@@ -14,16 +14,16 @@ type ApiResponce = {
 
 export type Weather = {
    description: string;
-   temperature: number;
+   temperature: number | string;
    city: string;
 };
 
 export const weatherService = {
    async recieveWeather(city: string): Promise<Weather> {
       const cachedWeather = cache.get(`Weather:${city}`);
-      console.log(cachedWeather);
       if (cachedWeather === null) {
-         const weatherApiUrl = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${process.env.WEATHER_API_KEY}&units=metric`;
+         const apiKey = process.env.OPENWEATHER_API_KEY;
+         const weatherApiUrl = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric`;
          const response = await fetch(weatherApiUrl);
          const data = (await response.json()) as ApiResponce;
          const weather: Weather = {

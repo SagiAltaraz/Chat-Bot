@@ -30,18 +30,9 @@ export const checkPromptMiddleware = {
             return weatherController.getWeather(req, res);
          }
 
-         // 2) Currency rate intent (expects a target currency like "USD", "EUR", "GBP")
+         // 2) Currency rate intent -> let the router/LLM handle it
          if (isExchangeIntent(normalized)) {
-            const target = extractCurrency(normalized);
-            if (!target) return next(); // Let chat clarify the currency
-
-            req.params = req.params || {};
-            req.params.target = target; // e.g., "USD"
-            console.log(target);
-            const {
-               exchangeController,
-            } = require('../controllers/exchange.controller.js');
-            return exchangeController.getExchangeRate(req, res);
+            return next();
          }
 
          // 3) Math equation intent (e.g., "2+2", "solve 3*(4+5)")
