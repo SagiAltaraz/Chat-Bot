@@ -34,6 +34,7 @@ export const weatherService = {
          };
          cache.set(`Weather:${city}`, weather);
          setTimeout(() => cache.del(`Weather:${city}`), 1000 * 60 * 60);
+
          return {
             description: data.weather[0].description,
             temperature: data.main.temp,

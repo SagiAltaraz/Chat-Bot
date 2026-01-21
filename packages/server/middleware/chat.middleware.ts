@@ -9,6 +9,11 @@ export const chatMiddleware = {
       const { prompt, conversationId } = req.body;
       const classification = await intentService.classify(prompt);
       const { intent, parameters } = classification;
+      const cookies = req.cookies;
+
+      if (!cookies?.conversationId) {
+         res.cookie('conversationId', conversationId);
+      }
 
       switch (intent) {
          case 'getWeather':

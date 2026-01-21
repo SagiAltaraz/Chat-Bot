@@ -1,6 +1,8 @@
 import type { Request, Response } from 'express';
 import { weatherService } from '../services/weather.service';
 import type { Weather } from '../services/weather.service';
+import type { GenerateTextResult } from '../llm/client';
+import { conversationRepository } from '../repositories/conversation.repository';
 
 export const weatherController = {
    async getWeather(req: Request, res: Response) {
@@ -8,9 +10,19 @@ export const weatherController = {
       if (!city && city.length === 0)
          return res.status(400).json({ error: 'City is required' });
       const weather: Weather = await weatherService.recieveWeather(city);
+      const message = `in ${city} is ${weather.temperature} degrees and ${weather.description} weather`;
+
+      conversationRepository.saveSession(
+         req.body.conversationId,
+         req.body.prompt,
+         {
+            id: req.body.conversationId,
+            text: message,
+         }
+      );
 
       res.json({
-         message: `in ${city} is ${weather.temperature} degrees and ${weather.description} weather`,
+         message: message,
       });
    },
 };
