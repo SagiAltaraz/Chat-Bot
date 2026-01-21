@@ -1,4 +1,5 @@
 import { evaluate } from 'mathjs';
+import { number } from 'zod';
 
 type ExchangeApiResponse = {
    rates: Record<string, number>;
@@ -98,12 +99,15 @@ export const exchangeService = {
             ? params.to
             : params?.target;
       const amount =
-         typeof params?.amount === 'number' ? params.amount : undefined;
+         typeof params?.amount === 'number'
+            ? params.amount
+            : Number(params?.amount);
 
       if (!to) return 'Which currency?';
 
       const base = from ?? 'ILS';
       const data = await exchangeService.convertCurrency(base, to, amount ?? 1);
+
       return amount !== undefined
          ? `${data.amount} ${data.from} = ${data.result} ${data.to}`
          : `1 ${data.from} = ${data.rate} ${data.to}`;

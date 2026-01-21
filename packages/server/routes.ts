@@ -5,7 +5,7 @@ import { reviewController } from './controllers/review.controller.js';
 import { weatherController } from './controllers/weather.controller.js';
 import { calculateController } from './controllers/calculate.controller.js';
 import { exchangeController } from './controllers/exchange.controller.js';
-import { checkPromptMiddleware } from './middleware/checkPrompt.middleware.js';
+import { chatMiddleware } from './middleware/chat.middleware';
 import { chatMessagesController } from './controllers/chatMessages.controller.js';
 
 const router = express.Router();
@@ -20,7 +20,7 @@ router.get('/api/hello', (req: Request, res: Response) => {
 
 router.post(
    '/api/chat',
-   checkPromptMiddleware.checkPrompt,
+   chatMiddleware.classifyMessage,
    chatController.sendMassage
 );
 

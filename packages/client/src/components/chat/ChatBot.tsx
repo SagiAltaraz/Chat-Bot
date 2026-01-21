@@ -37,7 +37,6 @@ const ChatBot = () => {
          const data = await axios.post<Message[], any, {}>('/api/getMessages', {
             conversationId: cookie,
          });
-
          if (!ignore) return;
 
          for (let index = 0; index < data.data.botMessages.length; index++) {
@@ -67,6 +66,7 @@ const ChatBot = () => {
             prompt,
             conversationId: conversationId.current,
          });
+
          setMessages((prev) => [
             ...prev,
             { content: data.message, role: 'bot' },
