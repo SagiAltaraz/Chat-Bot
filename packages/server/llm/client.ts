@@ -40,8 +40,6 @@ export const llmClient = {
          previous_response_id: previouseResponceId,
          ...(textFormat ? { text: { format: textFormat } } : {}),
       } as any);
-
-      });
       return {
          id: response.id,
          text: response.output_text,
