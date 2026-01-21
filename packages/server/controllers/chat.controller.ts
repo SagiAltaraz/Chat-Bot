@@ -63,6 +63,17 @@ export const chatController = {
          }
 
          res.json({ message: replyMessage });
+         const cookies = req.cookies;
+         if (!cookies?.conversationId) {
+            res.cookie('conversationId', conversationId);
+         }
+         const response = await chatService.sendMessage(prompt, conversationId);
+         if (!response?.content) {
+            return res
+               .status(500)
+               .json({ error: 'Failed to generate response.' });
+         }
+         res.json({ message: response.content });
       } catch (error) {
          console.error('Controller Error:', error);
          res.status(500).json({ error: 'Internal Server Error' });

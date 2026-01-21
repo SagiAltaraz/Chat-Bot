@@ -3,7 +3,7 @@ import ReactMarkdown from 'react-markdown';
 
 export type Message = {
    content: string;
-   role: 'user' | 'bot';
+   role: 'user' | 'bot' | 'assistant';
 };
 
 type Props = {

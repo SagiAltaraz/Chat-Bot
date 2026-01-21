@@ -16,7 +16,7 @@ type GenerateTextOptions = {
    };
 };
 
-type GenerateTextResult = {
+export type GenerateTextResult = {
    id: string;
    text: string;
 };
@@ -41,6 +41,7 @@ export const llmClient = {
          ...(textFormat ? { text: { format: textFormat } } : {}),
       } as any);
 
+      });
       return {
          id: response.id,
          text: response.output_text,
