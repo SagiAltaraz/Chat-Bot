@@ -2,12 +2,21 @@
 
 To install dependencies:
 
+Go to root directory
 ```bash
 bun install
 ```
 
-To run:
+To install prisma
+```bash
+cd ./packages/server
+bunx prisma migrate dev
+bunx prisma generate
+```
 
+
+To run:
+Go to root directory
 ```bash
 bun run index.ts
 ```
