@@ -1,4 +1,4 @@
-import { llmClient } from '../llm/client';
+import { llmClient } from '../llm/openAiClient';
 import routerPrompt from '../prompts/router.txt';
 
 interface RouterResponse {
@@ -32,6 +32,7 @@ export const intentService = {
             .trim();
 
          const parsedResponse = JSON.parse(cleanText);
+         console.log(parsedResponse);
          return parsedResponse;
       } catch (error) {
          console.error('Router Parsing Failed. Raw text:', response.text);

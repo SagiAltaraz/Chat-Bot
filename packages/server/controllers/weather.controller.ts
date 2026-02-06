@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express';
 import { weatherService } from '../services/weather.service';
 import type { Weather } from '../services/weather.service';
-import type { GenerateTextResult } from '../llm/client';
+import type { GenerateTextResult } from '../llm/openAiClient';
 import { conversationRepository } from '../repositories/conversation.repository';
 
 export const weatherController = {

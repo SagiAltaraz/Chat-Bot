@@ -47,3 +47,47 @@ model Summary {
 
   @@map("summaries")
 }
+
+// The Definition Table (Dimension)
+model Intent {
+  id          Int      @id @default(autoincrement())
+  slug        String   @unique @db.VarChar(50) // e.g., 'getWeather', 'calculate'
+  description String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  classifications IntentClassification[] // Relation to logs
+
+  @@map("intents")
+}
+
+// The Fact Table (Logs)
+model IntentClassification {
+  id            Int      @id @default(autoincrement())
+
+  // Input Context
+  conversationId String  @db.VarChar(255) // Links to your JSON history file names
+  userInput      String  @db.Text
+
+  // Model Output
+  intentId      Int
+  confidence    Float
+  parameters    Json?    // Stores { city: "Paris", amount: 100 }
+
+  // Model Metadata
+  modelUsed     String   @default("gpt-4o-mini") @db.VarChar(50)
+  promptVersion String   @default("v1") @db.VarChar(20) // Useful for A/B testing prompts
+
+  // Quality Assurance / Labeling
+  isCorrect     Boolean? // Null = unreviewed, True/False = reviewed
+  correction    String?  @db.Text // If false, what should it have been?
+
+  classifiedAt  DateTime @default(now())
+
+  intent Intent @relation(fields: [intentId], references: [id])
+
+  @@index([conversationId])
+  @@index([confidence])
+  @@map("intent_classifications")
+}
+

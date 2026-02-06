@@ -1,5 +1,5 @@
 import { reviewRepository } from '../repositories/review.repository';
-import { llmClient } from '../llm/client';
+import { llmClient } from '../llm/openAiClient';
 import template from '../prompts/summarize_reviews.txt';
 
 export const reviewService = {
