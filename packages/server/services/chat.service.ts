@@ -1,7 +1,7 @@
 import { conversationRepository } from '../repositories/conversation.repository';
 import template from '../prompts/chatbot.txt';
 import projectInfo from '../prompts/neuroStep.txt';
-import { llmClient } from '../llm/openAiClient.js';
+import { llmClient } from '../llm/openAi/client.js';
 import type { Message } from '../repositories/conversation.repository';
 const instructions = template.replace('{{projectInfo}}', projectInfo);
 

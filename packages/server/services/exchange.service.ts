@@ -36,6 +36,7 @@ export const exchangeService = {
          'https://api.frankfurter.dev/v1/latest?base=ILS'
       );
       const data = (await responce.json()) as ExchangeApiResponse;
+
       const rawRate = data.rates[normalizedTarget];
       if (!rawRate) {
          throw new Error(`Rate not found for ILS to ${normalizedTarget}`);

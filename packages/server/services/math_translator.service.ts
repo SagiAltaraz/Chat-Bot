@@ -1,4 +1,4 @@
-import { llmClient } from '../llm/openAiClient';
+import { llmClient } from '../llm/openAi/client';
 import mathTranslatorPrompt from '../prompts/math_translator.txt';
 
 type MathTranslation = {

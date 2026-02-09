@@ -1,9 +1,5 @@
 import { DBConfig } from '../config/DB.config';
-import type {
-   IntentClassification,
-   Prisma,
-   Intent,
-} from '../generated/prisma/client';
+import type { Prisma } from '../generated/prisma/client';
 
 const prisma = DBConfig.client;
 

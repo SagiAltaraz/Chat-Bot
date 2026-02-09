@@ -1,4 +1,4 @@
-import type { GenerateTextResult } from '../llm/openAiClient.js';
+import type { GenerateTextResult } from '../llm/openAi/client.js';
 import { access, mkdir } from 'node:fs/promises';
 import { constants } from 'node:fs';
 
