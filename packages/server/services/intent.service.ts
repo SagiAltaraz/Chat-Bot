@@ -1,11 +1,37 @@
 import { intentRepository } from '../repositories/intent.repository';
+import { llmClient } from '../llm/openAi/client';
 
-const CLASSIFIER_URL = process.env.CLASSIFIER_URL || 'http://localhost:8000';
+const CLASSIFIER_URL = process.env.CLASSIFIER_URL || 'http://localhost:5001';
 
 interface RouterResponse {
    intent: string;
    parameters: any;
    confidence: number;
+}
+
+const PARAM_PROMPTS: Record<string, string> = {
+   getWeather:
+      'Extract the city name from this message. Return JSON: {"city": "..."}',
+   getExchangeRate:
+      'Extract currency conversion details. Return JSON: {"from": "USD", "to": "ILS", "amount": 1}. Use 3-letter currency codes. Default from=USD, to=ILS, amount=1.',
+};
+
+async function extractParameters(
+   intent: string,
+   userPrompt: string
+): Promise<any> {
+   const instructions = PARAM_PROMPTS[intent];
+   if (!instructions) return null;
+
+   const response = await llmClient.generateText({
+      model: 'gpt-4o-mini',
+      prompt: `Extract parameters as json from: ${userPrompt}`,
+      instructions,
+      maxTokens: 100,
+      textFormat: { type: 'json_object' },
+   });
+
+   return JSON.parse(response.text);
 }
 
 export const intentService = {
@@ -20,9 +46,18 @@ export const intentService = {
             body: JSON.stringify({ prompt: userPrompt }),
          });
 
-         const result = (await response.json()) as RouterResponse;
-         await logClassification(userPrompt, conversationId, result);
+         if (!response.ok)
+            throw new Error(`Python server returned ${response.status}`);
 
+         const result = (await response.json()) as RouterResponse;
+         if (!result?.intent)
+            throw new Error('Invalid response from classifier');
+
+         result.parameters = await extractParameters(result.intent, userPrompt);
+
+         logClassification(userPrompt, conversationId, result).catch((err) =>
+            console.error('Failed to log classification:', err)
+         );
          return result;
       } catch (error) {
          console.error('Classification failed:', error);
@@ -46,7 +81,7 @@ async function logClassification(
       userInput: userInput,
       intent: { connect: { id: intentRecord.id } },
       confidence: result.confidence,
-      parameters: result.parameters || {}, // Store JSON
+      parameters: result.parameters || {},
       modelUsed: 'all-MiniLM-L6-v2',
       promptVersion: 'v1',
    });

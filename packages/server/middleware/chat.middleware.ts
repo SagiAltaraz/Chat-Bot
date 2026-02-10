@@ -20,21 +20,18 @@ export const chatMiddleware = {
 
       switch (intent) {
          case 'getWeather':
-            req.params.city = String(parameters?.city);
+            req.params.city = parameters?.city;
             return weatherController.getWeather(req, res);
 
          case 'getExchangeRate':
             req.params = {
-               from: String(parameters?.from),
-               to: String(parameters?.to),
+               from: parameters?.from,
+               to: parameters?.to,
                amount: String(parameters?.amount),
             };
             return exchangeController.getExchangeRate(req, res);
 
          case 'calculate':
-            req.params = {
-               equation: String(parameters?.equation),
-            };
             return calculateController.calculateEquation(req, res);
       }
       next();
