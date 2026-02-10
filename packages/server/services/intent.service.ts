@@ -1,6 +1,6 @@
-import { llmClient } from '../llm/openAi/client';
-import routerPrompt from '../prompts/router.txt';
 import { intentRepository } from '../repositories/intent.repository';
+
+const CLASSIFIER_URL = process.env.CLASSIFIER_URL || 'http://localhost:8000';
 
 interface RouterResponse {
    intent: string;
@@ -9,40 +9,27 @@ interface RouterResponse {
 }
 
 export const intentService = {
-   async classify(userPrompt: string): Promise<RouterResponse> {
-      const response = await callLLM(userPrompt);
-
+   async classify(
+      userPrompt: string,
+      conversationId: string
+   ): Promise<RouterResponse> {
       try {
-         const cleanText = response.text
-            .replace(/```json/g, '')
-            .replace(/```/g, '')
-            .trim();
+         const response = await fetch(`${CLASSIFIER_URL}/classify`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prompt: userPrompt }),
+         });
 
-         const parsedResponse = JSON.parse(cleanText);
-         await logClassification(userPrompt, response.id, parsedResponse);
+         const result = (await response.json()) as RouterResponse;
+         await logClassification(userPrompt, conversationId, result);
 
-         return parsedResponse;
+         return result;
       } catch (error) {
-         console.error('Router Parsing Failed. Raw text:', response.text);
+         console.error('Classification failed:', error);
          return { intent: 'chat', parameters: null, confidence: 0 };
       }
    },
 };
-
-/* 
-TODO:
-Change the model to a classification model
-*/
-function callLLM(userPrompt: string) {
-   return llmClient.generateText({
-      model: 'gpt-4o-mini',
-      instructions: routerPrompt,
-      prompt: `Return json. User Input: "${userPrompt}"`,
-      temperature: 0,
-      maxTokens: 300,
-      textFormat: { type: 'json_object' },
-   });
-}
 
 async function logClassification(
    userInput: string,
@@ -60,7 +47,7 @@ async function logClassification(
       intent: { connect: { id: intentRecord.id } },
       confidence: result.confidence,
       parameters: result.parameters || {}, // Store JSON
-      modelUsed: 'gpt-4o-mini', // Hardcoded for now, or dynamic if you change models
+      modelUsed: 'all-MiniLM-L6-v2',
       promptVersion: 'v1',
    });
 }

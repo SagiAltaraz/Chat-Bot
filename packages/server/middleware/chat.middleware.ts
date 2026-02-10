@@ -7,7 +7,10 @@ import { calculateController } from '../controllers/calculate.controller.js';
 export const chatMiddleware = {
    async classifyMessage(req: Request, res: Response, next: NextFunction) {
       const { prompt, conversationId } = req.body;
-      const classification = await intentService.classify(prompt);
+      const classification = await intentService.classify(
+         prompt,
+         conversationId
+      );
       const { intent, parameters } = classification;
       const cookies = req.cookies;
 

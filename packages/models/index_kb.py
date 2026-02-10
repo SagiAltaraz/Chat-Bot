@@ -1,10 +1,9 @@
-import os
 from pathlib import Path
 import chromadb
 from sentence_transformers import SentenceTransformer
 
 # ---------------- CONFIG ---------------- #
-DATA_DIR = "../data/products"
+DATA_DIR = "../../data/products"
 CHROMA_DB_DIR = "./chroma_db"
 COLLECTION_NAME = "products_kb"
 
@@ -40,11 +39,8 @@ def main():
 
     print("Initializing ChromaDB...")
     client = chromadb.PersistentClient(path=CHROMA_DB_DIR)
-    collection = (
-        client.get_collection(name=COLLECTION_NAME)
-        if COLLECTION_NAME in [c.name for c in client.list_collections()]
-        else client.create_collection(name=COLLECTION_NAME)
-    )
+    client.delete_collection(name=COLLECTION_NAME) if COLLECTION_NAME in [c.name for c in client.list_collections()] else None
+    collection = client.create_collection(name=COLLECTION_NAME)
 
     doc_id = 0
     for doc in documents:
