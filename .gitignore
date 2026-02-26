@@ -42,3 +42,9 @@ venv/
 # Python
 __pycache__/
 *.pyc
+# ChromaDB local storage
+chroma_db/
+
+# Python
+__pycache__/
+*.pyc

@@ -7,7 +7,10 @@ import { calculateController } from '../controllers/calculate.controller.js';
 export const chatMiddleware = {
    async classifyMessage(req: Request, res: Response, next: NextFunction) {
       const { prompt, conversationId } = req.body;
-      const classification = await intentService.classify(prompt);
+      const classification = await intentService.classify(
+         prompt,
+         conversationId
+      );
       const { intent, parameters } = classification;
       const cookies = req.cookies;
 
@@ -22,16 +25,13 @@ export const chatMiddleware = {
 
          case 'exchange':
             req.params = {
-               from: String(parameters?.from),
-               to: String(parameters?.to),
+               from: parameters?.from,
+               to: parameters?.to,
                amount: String(parameters?.amount),
             };
             return exchangeController.getExchangeRate(req, res);
 
          case 'calculate':
-            req.params = {
-               equation: String(parameters?.equation),
-            };
             return calculateController.calculateEquation(req, res);
       }
       next();
