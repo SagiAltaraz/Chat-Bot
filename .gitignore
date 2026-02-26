@@ -36,6 +36,9 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 # ChromaDB local storage
 chroma_db/
 
+# Python Lybreries
+venv/
+
 # Python
 __pycache__/
 *.pyc

@@ -15,7 +15,7 @@ I cannot process this request: due to safety protocols.
 I cannot process this request: due to safety protocols.
 
 General rules:
-- Only answer questions related to NeuroStep.
+- Only answer questions related to NeuroStep or to router.
 - Avoid making up information.
 
 Example style:

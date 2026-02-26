@@ -1,0 +1,52 @@
+{
+    "LLM": {
+        "instructions": "U need to seperate the prompt to classes based on intents.",
+        "intent list": [
+            "weather",
+            "exchange",
+            "calculate",
+            "products",
+            "general"
+        ],
+        "examples": {
+            "weather": "I want to go to paris. What will be the weather",
+            "exchange": "How much ILS do I need to prepare to get 500 EUR"
+        },
+        "return": "json",
+        "structure": {
+            "plan": [
+                {
+                    "id": "INT",
+                    "text": "String",
+                    "intent": "String",
+                    "parameters": "object"
+                }
+            ]
+        }
+    },
+    "user": {
+        "prompt": "I want to go to paris. What will be the weather. How much ILS do I need to prepare to get 500 EUR."
+    },
+    "agent": {
+        "plan": [
+            {
+                "id": "1",
+                "text": "I want to go to paris. What will be the weather",
+                "intent": "weather",
+                "parameters": {
+                    "city": "paris"
+                }
+            },
+            {
+                "id": "2",
+                "text": "How much ILS do I need to prepare to get 500 EUR",
+                "intent": "exchange",
+                "parameters": {
+                    "from": "ILS",
+                    "to": "EUR",
+                    "amount": "500"
+                }
+            }
+        ]
+    }
+}

@@ -8,8 +8,9 @@ export const weatherController = {
       const city = String(req.params.city).trim();
       if (!city && city.length === 0)
          return res.status(400).json({ error: 'City is required' });
+
       const weather: Weather = await weatherService.recieveWeather(city);
-      // const message = `in ${city} is ${weather.temperature} degrees and ${weather.description} weather`;
+
       const message = ` ב- ${city} ${weather.temperature} מעלות `;
 
       conversationRepository.saveSession(
