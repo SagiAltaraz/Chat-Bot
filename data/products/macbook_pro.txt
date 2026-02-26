@@ -1,0 +1,33 @@
+MacBook Pro
+
+Overview
+The MacBook Pro is a professional laptop developed by Apple. It is designed for users who need high performance, reliability, and long battery life. Common users include software developers, video editors, designers, and data professionals.
+
+Hardware and Performance
+MacBook Pro models are powered by Apple Silicon processors, which combine CPU, GPU, and memory in a unified architecture. This design allows the laptop to handle demanding tasks such as video rendering, software compilation, and machine learning workloads efficiently.
+
+Display and Media
+The laptop features a high-resolution Retina display with accurate colors and high brightness. This makes it suitable for photo editing, video production, and long working sessions. The built-in speakers and microphones are optimized for media creation and video calls.
+
+Connectivity and Operating System
+MacBook Pro includes multiple Thunderbolt ports for external displays and storage devices. It runs macOS, which provides a secure operating system with strong privacy features and integration with other Apple devices.
+
+Common Questions
+The MacBook Pro is suitable for professional video editing and software development. It is less focused on gaming compared to traditional gaming laptops.
+
+עברית
+
+סקירה כללית
+ה־MacBook Pro הוא מחשב נייד מקצועי מבית Apple, המיועד למשתמשים הזקוקים לביצועים גבוהים, אמינות וחיי סוללה ארוכים. משתמשים נפוצים כוללים מפתחי תוכנה, עורכי וידאו ומעצבים.
+
+חומרה וביצועים
+דגמי MacBook Pro מבוססים על מעבדי Apple Silicon, המאחדים מעבד, גרפיקה וזיכרון בארכיטקטורה אחת. מבנה זה מאפשר טיפול יעיל במשימות כבדות כמו רינדור וידאו וקומפילציית קוד.
+
+מסך ומדיה
+המחשב כולל מסך Retina ברזולוציה גבוהה עם צבעים מדויקים ובהירות גבוהה, המתאים לעריכת תמונות ווידאו ולעבודה ממושכת. הרמקולים והמיקרופונים איכותיים ומתאימים ליצירת תוכן ושיחות וידאו.
+
+חיבורים ומערכת הפעלה
+ה־MacBook Pro כולל חיבורי Thunderbolt למסכים חיצוניים ואחסון, ופועל על מערכת ההפעלה macOS עם דגש על אבטחה ואינטגרציה עם מוצרי Apple אחרים.
+
+שאלות נפוצות
+המחשב מתאים לעריכת וידאו מקצועית ולפיתוח תוכנה, אך אינו מיועד לגיימינג כבד.
