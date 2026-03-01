@@ -29,7 +29,7 @@ def chunk_text(text, size=CHUNK_SIZE, overlap=CHUNK_OVERLAP):
     words = text.split()
     if len(words) <= size:
         return [text]
-    return [" ".join(words[i:i+size]) for i in range(0, len(words), size - overlap)]
+    return [" ".join(words[i : i + size]) for i in range(0, len(words), size - overlap)]
 
 
 def reset_collection(client, name):
@@ -52,7 +52,7 @@ def index_products(client, model):
             ids=[f"product_{doc_id + i}" for i in range(len(chunks))],
             documents=chunks,
             embeddings=embeddings,
-            metadatas=[{"source": doc["filename"]} for _ in chunks]
+            metadatas=[{"source": doc["filename"]} for _ in chunks],
         )
         doc_id += len(chunks)
 
@@ -60,7 +60,7 @@ def index_products(client, model):
 
 
 def index_intents(client, model):
-    with open(INTENTS_FILE, "r") as f:
+    with open(INTENTS_FILE, "r", encoding="utf-8-sig") as f:
         intents = json.load(f)
 
     collection = reset_collection(client, INTENTS_COLLECTION)
@@ -72,7 +72,7 @@ def index_intents(client, model):
             ids=[f"intent_{idx + i}" for i in range(len(examples))],
             documents=examples,
             embeddings=embeddings,
-            metadatas=[{"intent": intent} for _ in examples]
+            metadatas=[{"intent": intent} for _ in examples],
         )
         idx += len(examples)
 
