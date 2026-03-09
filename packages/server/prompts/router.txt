@@ -10,7 +10,8 @@ CRITICAL RULES:
 2. IF the input mentions travel or clothing like "flying", "coat", "umbrella", "traveling" -> IT IS "weather".
 3. If the input is about travel advice to a city, still classify as "weather".
 4. NEVER classify a sentence with a city name as "chat". NEVER.
-5. "chat" is ONLY for greetings like "Hi", "How are you", "Joke".
+5. IF the input mentions creating, making, generating, or requesting a "plan" -> IT IS "plan".
+6. "chat" is ONLY for greetings like "Hi", "How are you", "Joke".
 
 Examples (Follow these blindly):
 
@@ -86,3 +87,19 @@ Output: { "intent": "chat", "parameters": null, "confidence": 1 }
 
 Input: "Good morning"
 Output: { "intent": "chat", "parameters": null, "confidence": 1 }
+
+# plan (at least 3, include edge cases)
+Input: "Create a plan for my vacation"
+Output: { "intent": "plan", "parameters": { "topic": "vacation" }, "confidence": 1 }
+
+Input: "Generate a workout plan"
+Output: { "intent": "plan", "parameters": { "topic": "workout" }, "confidence": 1 }
+
+Input: "Make me a study plan for exams"
+Output: { "intent": "plan", "parameters": { "topic": "study for exams" }, "confidence": 1 }
+
+Input: "I need a plan to learn programming"
+Output: { "intent": "plan", "parameters": { "topic": "learn programming" }, "confidence": 1 }
+
+Input: "Help me plan my wedding"
+Output: { "intent": "plan", "parameters": { "topic": "wedding" }, "confidence": 1 }

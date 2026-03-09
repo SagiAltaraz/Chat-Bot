@@ -1,7 +1,8 @@
-import { intentRepository } from '../repositories/intent.repository';
 import { llmClient } from '../llm/openAi/client';
-
-const CLASSIFIER_URL = process.env.CLASSIFIER_URL || 'http://localhost:5001';
+import routerPrompt from '../prompts/router.txt';
+import { intentRepository } from '../repositories/intent.repository';
+import { planService } from './plan.service.js';
+import type { PlanCreationResult } from '../repositories/plan.repository.js';
 
 interface RouterResponse {
    intent: string;
@@ -9,59 +10,79 @@ interface RouterResponse {
    confidence: number;
 }
 
-const PARAM_PROMPTS: Record<string, string> = {
-   getWeather:
-      'Extract the city name from this message. Return JSON: {"city": "..."}',
-   getExchangeRate:
-      'Extract currency conversion details. Return JSON: {"from": "USD", "to": "ILS", "amount": 1}. Use 3-letter currency codes. Default from=USD, to=ILS, amount=1.',
-};
-
-async function extractParameters(
-   intent: string,
-   userPrompt: string
-): Promise<any> {
-   const instructions = PARAM_PROMPTS[intent];
-   if (!instructions) return null;
-
-   const response = await llmClient.generateText({
-      model: 'gpt-4o-mini',
-      prompt: `Extract parameters as json from: ${userPrompt}`,
-      instructions,
-      maxTokens: 100,
-      textFormat: { type: 'json_object' },
-   });
-
-   return JSON.parse(response.text);
+interface PlanReceiveResult {
+   success: boolean;
+   plan?: any;
+   error?: string;
 }
 
 export const intentService = {
-   async classify(
-      userPrompt: string,
-      conversationId: string
-   ): Promise<RouterResponse> {
+   async classify(userPrompt: string): Promise<RouterResponse> {
+      const response = await callLLM(userPrompt);
+
       try {
-         const response = await fetch(`${CLASSIFIER_URL}/classify`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ prompt: userPrompt }),
-         });
-
-         if (!response.ok)
-            throw new Error(`Python server returned ${response.status}`);
-
-         const result = (await response.json()) as RouterResponse;
-         if (!result?.intent)
-            throw new Error('Invalid response from classifier');
+         const cleanText = response.text
+            .replace(/```json/g, '')
+            .replace(/```/g, '')
+            .trim();
 
          const parsedResponse = JSON.parse(cleanText);
          await logClassification(userPrompt, response.id, parsedResponse);
          return parsedResponse;
       } catch (error) {
-         console.error('Classification failed:', error);
+         console.error('Router Parsing Failed. Raw text:', response.text);
          return { intent: 'chat', parameters: null, confidence: 0 };
       }
    },
+
+   /**
+    * Receives a plan request and generates a plan using the plan service
+    * @param userPrompt - The user's request for a plan
+    * @returns Promise<PlanReceiveResult> - The result of plan generation
+    */
+   async receivePlan(userPrompt: string): Promise<PlanReceiveResult> {
+      try {
+         // Create the plan using the plan service
+         const planResult: PlanCreationResult = await planService.createPlan({
+            prompt: userPrompt,
+         });
+
+         if (planResult.success) {
+            return {
+               success: true,
+               plan: planResult.plan,
+            };
+         } else {
+            return {
+               success: false,
+               error: planResult.error || 'Failed to create plan',
+            };
+         }
+      } catch (error) {
+         const errorMessage =
+            error instanceof Error ? error.message : 'Unknown error occurred';
+         return {
+            success: false,
+            error: `Failed to receive plan: ${errorMessage}`,
+         };
+      }
+   },
 };
+
+/* 
+TODO:
+Change the model to a classification model
+*/
+function callLLM(userPrompt: string) {
+   return llmClient.generateText({
+      model: 'gpt-4o-mini',
+      instructions: routerPrompt,
+      prompt: `Return json. User Input: "${userPrompt}"`,
+      temperature: 0,
+      maxTokens: 300,
+      textFormat: { type: 'json_object' },
+   });
+}
 
 async function logClassification(
    userInput: string,
@@ -78,8 +99,8 @@ async function logClassification(
       userInput: userInput,
       intent: { connect: { id: intentRecord.id } },
       confidence: result.confidence,
-      parameters: result.parameters || {},
-      modelUsed: 'all-MiniLM-L6-v2',
+      parameters: result.parameters || {}, // Store JSON
+      modelUsed: 'gpt-4o-mini', // Hardcoded for now, or dynamic if you change models
       promptVersion: 'v1',
    });
 }
