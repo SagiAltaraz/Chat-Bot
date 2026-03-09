@@ -7,6 +7,7 @@ import { calculateController } from './controllers/calculate.controller.js';
 import { exchangeController } from './controllers/exchange.controller.js';
 import { chatMiddleware } from './middleware/chat.middleware';
 import { chatMessagesController } from './controllers/chatMessages.controller.js';
+import { planController } from './controllers/plan.controller.js';
 
 const router = express.Router();
 
@@ -17,6 +18,12 @@ router.get('/', (req: Request, res: Response) => {
 router.get('/api/hello', (req: Request, res: Response) => {
    res.json({ message: 'Hello from the API!' });
 });
+
+// Plan creation routes
+// router.post('/api/planCreator', planController.createPlan);
+
+//Basic plan creation with validation middleware
+router.post('/api/plan/create', planController.createPlan);
 
 router.post(
    '/api/chat',

@@ -38,6 +38,7 @@ chroma_db/
 
 # Python Lybreries
 venv/
+.venv/
 
 # Python
 __pycache__/

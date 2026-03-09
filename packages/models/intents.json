@@ -1,5 +1,5 @@
 {
-  "getWeather": [
+  "weather": [
     "What is the weather in Paris?",
     "Im flying to London, should I take a coat?",
     "Do I need an umbrella in Tel Aviv?",
@@ -12,7 +12,7 @@
     "האם ירד גשם היום בחיפה?",
     "אני טס ללונדון, צריך מעיל?"
   ],
-  "getExchangeRate": [
+  "exchange": [
     "Convert 100 USD to ILS",
     "Exchange rate to EUR",
     "USD rate",
@@ -33,54 +33,18 @@
     "כמה זה 12 כפול 3?",
     "מה זה 100 חלקי 4?"
   ],
-  "chat": [
-    "Hi",
-    "Hello",
-    "How are you?",
-    "Tell me a joke",
-    "Thanks!",
-    "Good morning",
-    "שלום",
-    "מה שלומך?",
-    "ספר לי בדיחה",
-    "תודה",
-    "בוקר טוב"
+  "products": [
+    "Tell me about your products",
+    "What products do you sell?",
+    "Show me the product catalog",
+    "Do you have laptops?",
+    "What are your best sellers?",
+    "מה המוצרים שלכם?",
+    "יש לכם מחשבים ניידים?",
+    "תראה לי את הקטלוג",
+    "מה המוצרים הפופולריים?"
   ],
-  "getWeather": [
-    "What is the weather in Paris?",
-    "Im flying to London, should I take a coat?",
-    "Do I need an umbrella in Tel Aviv?",
-    "Whats the temperature in Berlin?",
-    "Will it rain in New York today?",
-    "Weather forecast for Dubai",
-    "Heading to Rome tomorrow, is it warm there?",
-    "מה מזג האוויר בתל אביב?",
-    "מה הטמפרטורה בירושלים?",
-    "האם ירד גשם היום בחיפה?",
-    "אני טס ללונדון, צריך מעיל?"
-  ],
-  "getExchangeRate": [
-    "Convert 100 USD to ILS",
-    "Exchange rate to EUR",
-    "USD rate",
-    "How much is 200 euros in dollars?",
-    "Currency conversion USD to EUR",
-    "כמה זה 50 דולר ביורו?",
-    "מה שער הדולר?",
-    "המר 100 שקל לדולר",
-    "כמה שווה יורו בשקלים?"
-  ],
-  "calculate": [
-    "Solve 5 + 5",
-    "Calculate 12*(4+3)",
-    "What is 9^2 - 7",
-    "What is 6 * (7 - 2)",
-    "Multiply 8 by 9",
-    "חשב 5 + 5",
-    "כמה זה 12 כפול 3?",
-    "מה זה 100 חלקי 4?"
-  ],
-  "chat": [
+  "general": [
     "Hi",
     "Hello",
     "How are you?",

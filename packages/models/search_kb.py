@@ -1,19 +1,24 @@
+import json
 import uvicorn
 import chromadb
 from fastapi import FastAPI
 from pydantic import BaseModel
 from sentence_transformers import SentenceTransformer
+from ollama import chat
 
 EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 CHROMA_DB_DIR = "./chroma_db"
 PRODUCTS_COLLECTION = "products_kb"
-INTENTS_COLLECTION = "intents_kb"
 PORT = 5001
+
+with open("system_instructions.json", "r", encoding="utf-8") as f:
+    SYSTEM_INSTRUCTIONS = json.load(f)
+
+ROUTER_SYSTEM_PROMPT = "\n".join(SYSTEM_INSTRUCTIONS["router"])
 
 app = FastAPI()
 model: SentenceTransformer = None
 products_collection = None
-intents_collection = None
 
 
 class SearchRequest(BaseModel):
@@ -27,33 +32,33 @@ class ClassifyRequest(BaseModel):
 
 @app.on_event("startup")
 def startup():
-    global model, products_collection, intents_collection
+    global model, products_collection
     model = SentenceTransformer(EMBEDDING_MODEL)
     client = chromadb.PersistentClient(path=CHROMA_DB_DIR)
     products_collection = client.get_collection(name=PRODUCTS_COLLECTION)
-    intents_collection = client.get_collection(name=INTENTS_COLLECTION)
-    print(f"Products: {products_collection.count()} chunks, Intents: {intents_collection.count()} examples")
+    print(f"Products KB: {products_collection.count()} chunks loaded")
 
 
 @app.post("/classify")
 def classify(req: ClassifyRequest):
-    query_embedding = model.encode([req.prompt]).tolist()
-    results = intents_collection.query(query_embeddings=query_embedding, n_results=1)
-
-    intent = results["metadatas"][0][0]["intent"]
-    distance = results["distances"][0][0]
-
-    return {
-        "intent": intent,
-        "parameters": None,
-        "confidence": round(1 - distance, 4),
-    }
+    response = chat(
+        model="qwen2.5:7b",
+        messages=[
+            {"role": "system", "content": ROUTER_SYSTEM_PROMPT},
+            {"role": "user", "content": req.prompt},
+        ],
+        format="json",
+        options={"temperature": 0},
+    )
+    return json.loads(response.message.content)
 
 
 @app.post("/search_kb")
 def search_kb(req: SearchRequest):
     query_embedding = model.encode([req.query]).tolist()
-    results = products_collection.query(query_embeddings=query_embedding, n_results=req.n_results)
+    results = products_collection.query(
+        query_embeddings=query_embedding, n_results=req.n_results
+    )
 
     return {
         "results": [
