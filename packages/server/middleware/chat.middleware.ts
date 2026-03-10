@@ -3,11 +3,15 @@ import { weatherService } from '../services/weather.service.js';
 import { exchangeService } from '../services/exchange.service.js';
 import { mathTranslatorService } from '../services/math_translator.service.js';
 import { productInformationService } from '../services/productInformation.service.js';
+import { chatService } from '../services/chat.service.js';
 import { planService } from '../services/plan.service.js';
 import { conversationRepository } from '../repositories/conversation.repository.js';
 import type { PlanStep } from '../repositories/plan.repository.js';
 
-async function executeStep(step: PlanStep): Promise<string> {
+async function executeStep(
+   step: PlanStep,
+   conversationId: string
+): Promise<string> {
    switch (step.intent) {
       case 'weather': {
          const weather = await weatherService.recieveWeather(
@@ -35,9 +39,10 @@ async function executeStep(step: PlanStep): Promise<string> {
          );
       }
       case 'general': {
-         // general intent is handled inline by the synthesis template (Ollama)
-         // or falls through to the chatbot - skip executing as a tool step
-         return '';
+         const query = String(step.parameters.query ?? '');
+         if (!query) return '';
+         const response = await chatService.sendMessage(query, conversationId);
+         return response?.content ?? '';
       }
       default:
          return '';
@@ -60,7 +65,7 @@ export const chatMiddleware = {
          // 1. Execute each step and collect results keyed by intent
          const stepResults: string[] = [];
          for (const step of result.plan.plan) {
-            stepResults.push(await executeStep(step));
+            stepResults.push(await executeStep(step, conversationId));
          }
 
          // 2. Replace <placeholders> in the final answer template
