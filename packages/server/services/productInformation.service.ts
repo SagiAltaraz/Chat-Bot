@@ -21,9 +21,16 @@ export const productInformationService = {
       }
 
       const data = (await response.json()) as {
-         results: Array<{ text: string }>;
+         results: Array<{ text: string; distance: number }>;
       };
-      const context = data.results.map((r) => r.text).join('\n\n');
+
+      // Filter out chunks that are too far from the query (distance > 1.0)
+      const relevant = data.results.filter((r) => r.distance < 1.0);
+      const context = (
+         relevant.length > 0 ? relevant : data.results.slice(0, 1)
+      )
+         .map((r) => r.text)
+         .join('\n\n');
 
       const result = await llmClient.generateText({
          model: 'gpt-4o-mini',
