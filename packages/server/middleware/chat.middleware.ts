@@ -2,6 +2,7 @@ import type { Request, Response, NextFunction } from 'express';
 import { weatherService } from '../services/weather.service.js';
 import { exchangeService } from '../services/exchange.service.js';
 import { mathTranslatorService } from '../services/math_translator.service.js';
+import { productInformationService } from '../services/productInformation.service.js';
 import { planService } from '../services/plan.service.js';
 import { conversationRepository } from '../repositories/conversation.repository.js';
 import type { PlanStep } from '../repositories/plan.repository.js';
@@ -12,7 +13,7 @@ async function executeStep(step: PlanStep): Promise<string> {
          const weather = await weatherService.recieveWeather(
             String(step.parameters.city)
          );
-         return `in ${step.parameters.city} is ${weather.temperature} degrees`;
+         return `${weather.temperature} degrees`;
       }
       case 'exchange': {
          const result = await exchangeService.getExchangeRate({
@@ -20,12 +21,23 @@ async function executeStep(step: PlanStep): Promise<string> {
             to: String(step.parameters.to),
             amount: Number(step.parameters.amount),
          });
-         return `${result.amount} ${result.from} = ${result.result} ${result.to}`;
+         return `${result.result}`;
       }
       case 'calculate': {
          return await mathTranslatorService.calculateFromPrompt(
             step.parameters.equation ?? ''
          );
+      }
+      case 'products': {
+         return await productInformationService.getProductInformation(
+            String(step.parameters.product_name ?? ''),
+            String(step.parameters.query ?? '')
+         );
+      }
+      case 'general': {
+         // general intent is handled inline by the synthesis template (Ollama)
+         // or falls through to the chatbot - skip executing as a tool step
+         return '';
       }
       default:
          return '';
@@ -39,6 +51,12 @@ export const chatMiddleware = {
       const result = await planService.createPlan({ prompt });
 
       if (result.success && result.plan) {
+         // If all steps are general intent, let the chatbot (OpenAI) handle it
+         const isAllGeneral = result.plan.plan.every(
+            (step) => step.intent === 'general'
+         );
+         if (isAllGeneral) return next();
+
          // 1. Execute each step and collect results keyed by intent
          const stepResults: string[] = [];
          for (const step of result.plan.plan) {
@@ -56,6 +74,12 @@ export const chatMiddleware = {
                );
             }
          }
+
+         // Clean up any unreplaced placeholders (e.g. from general intent)
+         finalAnswer = finalAnswer
+            .replace(/<result_from_tool_\d+>\./g, '')
+            .replace(/<result_from_tool_\d+>/g, '')
+            .trim();
 
          if (!cookies?.conversationId) {
             res.cookie('conversationId', conversationId);
