@@ -186,3 +186,17 @@ POST http://localhost:5001/search_kb  { "query": "MacBook Pro specs", "n_results
 | `general` | "Tell me a joke" |
 
 Multi-intent prompts are fully supported — the bot will run all relevant tools and combine the results.
+
+---
+
+## Benchmarking
+
+| Component | Model | Avg Response (ms) | Quality (1–5) | Cost |
+|-----------|-------|:-----------------:|:-------------:|:----:|
+| Router & Planning | Ollama (qwen2.5:7b) | ~21,000 | — | free |
+| Router & Planning (fallback) | OpenAI GPT-4o-mini | ~800 | 5 | $ |
+| General Chat | Ollama (qwen2.5:7b) | ~25,000 | — | free |
+| Review Sentiment | HuggingFace (Python) | — | 4–5 | free |
+| Review Analysis | OpenAI GPT-4o-mini | — | 5 | $ |
+| RAG Retrieval | HuggingFace (all-MiniLM-L6-v2) | ~200 | 5 | free |
+| RAG Generation | OpenAI GPT-4o-mini | ~15,000 | 5 | $ |
