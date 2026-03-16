@@ -1,10 +1,11 @@
-# dependencies (bun install)
+# dependencies
 node_modules
 
 # output
 out
 dist
 *.tgz
+/history
 
 # code coverage
 coverage
@@ -13,9 +14,9 @@ coverage
 # logs
 logs
 _.log
-report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
-# dotenv environment variable files
+# dotenv
 .env
 .env.development.local
 .env.test.local
@@ -27,25 +28,18 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 .cache
 *.tsbuildinfo
 
-# IntelliJ based IDEs
+# IDEs
 .idea
-
-# Finder (MacOS) folder config
 .DS_Store
 
-# ChromaDB local storage
-chroma_db/
+# Prisma
+packages/server/generated/prisma
 
-# Python Lybreries
+# Python
 venv/
 .venv/
-
-# Python
 __pycache__/
 *.pyc
-# ChromaDB local storage
+
+# ChromaDB
 chroma_db/
-
-# Python
-__pycache__/
-*.pyc
