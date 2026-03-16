@@ -1,22 +1,13 @@
 import type { Request, Response } from 'express';
 import { mathTranslatorService } from '../services/math_translator.service';
-import { conversationRepository } from '../repositories/conversation.repository';
 
 export const calculateController = {
    async calculateEquation(req: Request, res: Response) {
-      const result = await mathTranslatorService.calculateFromPrompt(
-         req.body.prompt
-      );
+      const equation = String(req.params.equation ?? '').trim();
+      if (!equation)
+         return res.status(400).json({ error: 'Equation is required' });
 
-      await conversationRepository.saveSession(
-         req.body.conversationId,
-         req.body.prompt,
-         {
-            id: req.body.conversationId,
-            text: result,
-         }
-      );
-
+      const result = await mathTranslatorService.calculateFromPrompt(equation);
       res.json({ message: result });
    },
 };
