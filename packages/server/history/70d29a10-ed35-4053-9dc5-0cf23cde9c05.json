@@ -1,0 +1,99 @@
+{
+    "conversationId": "70d29a10-ed35-4053-9dc5-0cf23cde9c05",
+    "messages": {
+        "user": [
+            {
+                "id": "resp_0e6701b03d68d1fa00698457e72ed48195aa57aa96ac28a28d",
+                "content": "hello",
+                "role": "user"
+            },
+            {
+                "id": "resp_04cc49363eb7925500698457f0b6708196a77a5daa0620da16",
+                "content": "what is neurostep",
+                "role": "user"
+            },
+            {
+                "id": "resp_09d8d136db41c3140069845801d31881949aacd2f4d827f841",
+                "content": "what is the weather",
+                "role": "user"
+            },
+            {
+                "id": "70d29a10-ed35-4053-9dc5-0cf23cde9c05",
+                "content": "what is the weather in paris",
+                "role": "user"
+            },
+            {
+                "id": "70d29a10-ed35-4053-9dc5-0cf23cde9c05",
+                "content": "how much is 10 ILS in USD",
+                "role": "user"
+            },
+            {
+                "id": "70d29a10-ed35-4053-9dc5-0cf23cde9c05",
+                "content": "Ron has 5 apples how much will he have if his father give him more 10 apples",
+                "role": "user"
+            },
+            {
+                "id": "resp_08a3fb9b37deef770069845e2ba5388196a715ca1b2c5b53db",
+                "content": "what is the weather",
+                "role": "user"
+            },
+            {
+                "id": "70d29a10-ed35-4053-9dc5-0cf23cde9c05",
+                "content": "what is the weather in paris",
+                "role": "user"
+            },
+            {
+                "id": "70d29a10-ed35-4053-9dc5-0cf23cde9c05",
+                "content": "what is the weather in tel aviv",
+                "role": "user"
+            }
+        ],
+        "assistant": [
+            {
+                "id": "resp_0e6701b03d68d1fa00698457e72ed48195aa57aa96ac28a28d",
+                "content": "Hello there! Ready to level up your cognitive skills with NeuroStep? Let’s dive into the game!",
+                "role": "assistant"
+            },
+            {
+                "id": "resp_04cc49363eb7925500698457f0b6708196a77a5daa0620da16",
+                "content": "NeuroStep is an adaptive cognitive-training game designed to help users with cognitive challenges by adjusting complexity based on performance—think of it as a smart algorithm optimizing your brain's workout routine.",
+                "role": "assistant"
+            },
+            {
+                "id": "resp_09d8d136db41c3140069845801d31881949aacd2f4d827f841",
+                "content": "I cannot process this request: due to safety protocols.",
+                "role": "assistant"
+            },
+            {
+                "id": "70d29a10-ed35-4053-9dc5-0cf23cde9c05",
+                "content": " ב- Paris 8.82 מעלות ",
+                "role": "assistant"
+            },
+            {
+                "id": "70d29a10-ed35-4053-9dc5-0cf23cde9c05",
+                "content": "10 ILS = 3.24 USD",
+                "role": "assistant"
+            },
+            {
+                "id": "70d29a10-ed35-4053-9dc5-0cf23cde9c05",
+                "content": "5 + 10 = 15",
+                "role": "assistant"
+            },
+            {
+                "id": "resp_08a3fb9b37deef770069845e2ba5388196a715ca1b2c5b53db",
+                "content": "I cannot process this request: due to safety protocols.",
+                "role": "assistant"
+            },
+            {
+                "id": "70d29a10-ed35-4053-9dc5-0cf23cde9c05",
+                "content": " ב- Paris 8.75 מעלות ",
+                "role": "assistant"
+            },
+            {
+                "id": "70d29a10-ed35-4053-9dc5-0cf23cde9c05",
+                "content": " ב- Tel Aviv 19.3 מעלות ",
+                "role": "assistant"
+            }
+        ]
+    }
+}
