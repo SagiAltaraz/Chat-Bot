@@ -9,7 +9,6 @@ export const assistantService = {
       conversationId: string
    ): Promise<string | undefined> {
       const planResult = await planService.createPlan({ prompt });
-      console.log(planResult.plan);
 
       if (!planResult.success || !planResult.plan) {
          const response = await chatService.sendMessage(prompt, conversationId);

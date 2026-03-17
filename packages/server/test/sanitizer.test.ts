@@ -1,5 +1,5 @@
-import { describe, it, expect,vi } from 'vitest';
-import { sanitizeString, sanitizeDeep } from '../utils/sanitization.util';
+import { describe, it, expect, vi } from 'vitest';
+import { sanitizeString, sanitizeDeep } from '../utils/sanitizer.util';
 import { validatePrompt } from '../middleware/prompt.middleware';
 
 describe('sanitizeString', () => {

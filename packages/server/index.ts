@@ -2,6 +2,7 @@ import express from 'express';
 import dotenv from 'dotenv';
 import path from 'path';
 import router from './routes';
+import { sanitizeInput } from './middleware/sanitizeInput.middleware';
 
 dotenv.config();
 if (!process.env.OPENWEATHER_API_KEY || !process.env.OPENAI_API_KEY) {
@@ -10,6 +11,7 @@ if (!process.env.OPENWEATHER_API_KEY || !process.env.OPENAI_API_KEY) {
 
 const app = express();
 app.use(express.json());
+app.use(sanitizeInput);
 app.use(router);
 
 const PORT = process.env.PORT || 3000;
