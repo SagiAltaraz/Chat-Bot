@@ -1,8 +1,9 @@
+import { mkdir, unlink } from 'node:fs/promises';
 import type { GenerateTextResult } from '../llm/openAi/client.js';
-import { access, mkdir } from 'node:fs/promises';
-import { constants } from 'node:fs';
 
-const conversations = new Map<string, string>();
+const HISTORY_DIR = './history';
+const SESSION_TTL_MS = 5 * 60 * 1000;
+const lastResponseIds = new Map<string, string>();
 
 export type Message = {
    id: string;
@@ -12,6 +13,7 @@ export type Message = {
 
 export type Session = {
    conversationId: string;
+   expiresAt: string;
    messages: {
       user: Message[];
       assistant: Message[];
@@ -20,93 +22,140 @@ export type Session = {
 
 export const conversationRepository = {
    getLastResponseId(conversationId: string): string | undefined {
-      return conversations.get(conversationId);
+      return lastResponseIds.get(conversationId);
    },
 
    setLastResponseId(conversationId: string, responseId: string): void {
-      conversations.set(conversationId, responseId);
+      lastResponseIds.set(conversationId, responseId);
    },
 
-   async saveSession(
-      conversationId: string,
-      prompt: string,
-      result: GenerateTextResult
-   ): Promise<Session> {
-      const session = await this.getSession(conversationId);
-      this.addMessageToSession(result, session, prompt);
-      await this.printSession(session);
+   async hasSession(conversationId: string): Promise<boolean> {
+      return Boolean(await this.getSession(conversationId));
+   },
+
+   async getSession(conversationId: string): Promise<Session | null> {
+      const path = getSessionPath(conversationId);
+      const file = Bun.file(path);
+
+      if (!(await file.exists())) {
+         return null;
+      }
+
+      const session = normalizeSession((await file.json()) as Session);
+
+      if (isExpired(session)) {
+         await deleteSessionFile(path);
+         lastResponseIds.delete(conversationId);
+         return null;
+      }
+
       return session;
    },
 
-   async printSession(session: Session) {
-      try {
-         await Bun.write(
-            `./history/${session.conversationId}.json`,
-            JSON.stringify(session)
-         );
-      } catch (error) {
-         console.log(error);
-      }
+   async ensureSession(conversationId: string): Promise<Session> {
+      return (
+         (await this.getSession(conversationId)) ??
+         createSession(conversationId)
+      );
    },
 
-   async getSession(conversationId: string): Promise<Session> {
-      if (!(await historyIsExist())) {
-         await mkdir('./history', { recursive: true });
-         console.log('history dir created');
-         return createNewSession(conversationId);
-      }
-      if (!(await conversationIsExist(`./history/${conversationId}.json`))) {
-         console.log('conversation dir created');
-         return createNewSession(conversationId);
-      } else {
-         return (await Bun.file(
-            `./history/${conversationId}.json`
-         ).json()) as Session;
-      }
+   async deleteSession(conversationId: string): Promise<void> {
+      lastResponseIds.delete(conversationId);
+      await deleteSessionFile(getSessionPath(conversationId));
    },
 
-   addMessageToSession(
-      response: GenerateTextResult,
-      session: Session,
-      prompt: string
-   ) {
-      session.messages.assistant.push({
-         id: `${response.id}`,
-         content: response.text,
-         role: 'assistant',
-      });
-      session.messages.user.push({
-         id: `${response.id}`,
-         content: prompt,
-         role: 'user',
-      });
+   async saveSession(session: Session): Promise<Session> {
+      await ensureHistoryDir();
+      await Bun.write(
+         getSessionPath(session.conversationId),
+         JSON.stringify(session)
+      );
+      return session;
+   },
+
+   async appendMessage(
+      conversationId: string,
+      prompt: string,
+      response: GenerateTextResult
+   ): Promise<Session> {
+      return this.appendTurn(conversationId, prompt, response.text, response.id);
+   },
+
+   async appendTurn(
+      conversationId: string,
+      prompt: string,
+      assistantMessage: string,
+      assistantMessageId: string = crypto.randomUUID()
+   ): Promise<Session> {
+      const session = await this.ensureSession(conversationId);
+
+      session.messages.user.push(toUserMessage(assistantMessageId, prompt));
+      session.messages.assistant.push(
+         toAssistantMessage({
+            id: assistantMessageId,
+            text: assistantMessage,
+         })
+      );
+      session.expiresAt = createExpiresAt();
+
+      return this.saveSession(session);
    },
 };
 
-async function historyIsExist() {
-   try {
-      await access('./history', constants.F_OK);
-      return true;
-   } catch (e) {
-      return false;
-   }
+function getSessionPath(conversationId: string): string {
+   return `${HISTORY_DIR}/${conversationId}.json`;
 }
 
-async function conversationIsExist(path: string) {
-   try {
-      return await Bun.file(path).exists();
-   } catch (e) {
-      console.log(e);
-   }
+async function ensureHistoryDir(): Promise<void> {
+   await mkdir(HISTORY_DIR, { recursive: true });
 }
 
-function createNewSession(conversationId: string): Session {
-   const session: Session = {
+function createSession(conversationId: string): Session {
+   return {
       conversationId,
+      expiresAt: createExpiresAt(),
       messages: {
          user: [],
          assistant: [],
       },
    };
-   return session;
+}
+
+function normalizeSession(session: Session): Session {
+   return {
+      ...session,
+      expiresAt: session.expiresAt ?? createExpiresAt(),
+   };
+}
+
+function createExpiresAt(): string {
+   return new Date(Date.now() + SESSION_TTL_MS).toISOString();
+}
+
+function isExpired(session: Session): boolean {
+   return Date.parse(session.expiresAt) <= Date.now();
+}
+
+function toUserMessage(id: string, content: string): Message {
+   return {
+      id: String(id),
+      role: 'user',
+      content,
+   };
+}
+
+function toAssistantMessage(response: GenerateTextResult): Message {
+   return {
+      id: String(response.id),
+      role: 'assistant',
+      content: response.text,
+   };
+}
+
+async function deleteSessionFile(path: string): Promise<void> {
+   try {
+      await unlink(path);
+   } catch {
+      // Ignore missing/locked files during expiry cleanup.
+   }
 }

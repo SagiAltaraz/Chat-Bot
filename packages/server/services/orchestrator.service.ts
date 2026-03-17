@@ -41,8 +41,11 @@ async function executeStep(
       case 'general': {
          const query = String(step.parameters.query ?? '');
          if (!query) return '';
-         const response = await chatService.sendMessage(query, conversationId);
-         return response?.content ?? '';
+         const response = await chatService.generateReply(
+            query,
+            conversationId
+         );
+         return response.content;
       }
       default:
          return '';
