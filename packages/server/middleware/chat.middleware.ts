@@ -12,7 +12,7 @@ async function executeStep(step: PlanStep): Promise<string> {
          const weather = await weatherService.recieveWeather(
             String(step.parameters.city)
          );
-         return `in ${step.parameters.city} is ${weather.temperature} degrees`;
+         return ` ${weather.temperature} degrees`;
       }
       case 'exchange': {
          const result = await exchangeService.getExchangeRate({
@@ -20,7 +20,7 @@ async function executeStep(step: PlanStep): Promise<string> {
             to: String(step.parameters.to),
             amount: Number(step.parameters.amount),
          });
-         return `${result.amount} ${result.from} = ${result.result} ${result.to}`;
+         return ` ${result.result}`;
       }
       case 'calculate': {
          return await mathTranslatorService.calculateFromPrompt(
