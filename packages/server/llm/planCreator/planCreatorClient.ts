@@ -18,6 +18,7 @@ export interface PlanStep {
 export interface PlanResponse {
    plan: PlanStep[];
    final_answer_synthesis: string;
+   response_time_ms?: number;
 }
 
 export const planCreatorClient = {

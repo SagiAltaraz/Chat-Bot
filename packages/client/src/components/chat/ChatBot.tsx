@@ -16,7 +16,8 @@ const notificationAudio = new Audio(notificationSound);
 notificationAudio.volume = 0.2;
 
 type ChatResponse = {
-   message: string;
+   message?: string;
+   modelTimings?: Message['modelTimings'];
 };
 
 type HistoryResponse = {
@@ -78,7 +79,11 @@ const ChatBot = () => {
 
          setMessages((prev) => [
             ...prev,
-            { content: data.message, role: 'bot' },
+            {
+               content: data.message ?? '',
+               role: 'bot',
+               modelTimings: data.modelTimings,
+            },
          ]);
          setIsBotTyping(false);
          notificationAudio.play();

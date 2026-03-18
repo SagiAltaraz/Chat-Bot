@@ -12,7 +12,10 @@ export const chatController = {
             prompt,
             conversationId
          );
-         res.json({ message: response });
+         res.json({
+            message: response?.content,
+            modelTimings: response?.modelTimings,
+         });
       } catch (error) {
          console.error('Controller Error:', error);
          res.status(500).json({ error: 'Internal Server Error' });
@@ -46,6 +49,7 @@ export const chatController = {
                           {
                              content: assistantMessage.content,
                              role: 'bot' as const,
+                             modelTimings: assistantMessage.modelTimings,
                           },
                        ]
                      : []),

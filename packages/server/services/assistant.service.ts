@@ -7,17 +7,33 @@ export const assistantService = {
    async sendMessage(
       prompt: string,
       conversationId: string
-   ): Promise<string | undefined> {
+   ): Promise<
+      | {
+           content: string;
+           modelTimings?: { model: string; responseTimeMs: number }[];
+        }
+      | undefined
+   > {
       const planResult = await planService.createPlan({ prompt });
 
       if (!planResult.success || !planResult.plan) {
          const response = await chatService.sendMessage(prompt, conversationId);
-         return response?.content;
+         return response
+            ? {
+                 content: response.content,
+                 modelTimings: response.modelTimings,
+              }
+            : undefined;
       }
 
       if (orchestratorService.isAllGeneral(planResult.plan)) {
          const response = await chatService.sendMessage(prompt, conversationId);
-         return response?.content;
+         return response
+            ? {
+                 content: response.content,
+                 modelTimings: response.modelTimings,
+              }
+            : undefined;
       }
 
       const finalAnswer = await orchestratorService.executePlan(
@@ -28,7 +44,9 @@ export const assistantService = {
       await conversationRepository.appendTurn(
          conversationId,
          prompt,
-         finalAnswer
+         finalAnswer.content,
+         undefined,
+         finalAnswer.modelTimings
       );
 
       return finalAnswer;

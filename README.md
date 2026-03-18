@@ -1,107 +1,97 @@
 # Chat Bot
 
-A multi-intent AI chat assistant built with a **Bun + Express + React** monorepo.
-The bot understands natural language, classifies intent, and routes requests to specialized services — weather, currency exchange, math, product knowledge base (RAG), and general conversation.
+Multi-intent AI chat assistant built as a Bun monorepo with:
 
----
+- `packages/client`: React + Vite chat UI
+- `packages/server`: Express API and orchestration layer
+- `packages/models`: FastAPI model service for planning and product search
+
+The app can handle mixed prompts like weather, currency conversion, product questions, math, and general chat in a single message.
+
+## Current Flow
+
+1. The client sends a prompt to `POST /api/chat`.
+2. The server asks the Python model service to classify the prompt into a structured plan.
+3. The orchestrator runs each plan step.
+4. Product requests use the Python KB search endpoint to retrieve matching chunks.
+5. Retrieved product context is sent to OpenAI to generate the final product answer.
+6. The final combined answer is returned to the UI.
+7. The UI shows per-model timing badges for the models that already report timing.
 
 ## Architecture
 
-```
-User Message
-     │
-     ▼
-Intent Classification (OpenAI + Ollama/ChromaDB)
-     │
-     ▼
-Plan Creation  ──►  Orchestrator
-                        │
-           ┌────────────┼────────────┐────────────┐
-           ▼            ▼            ▼            ▼
-        Weather      Exchange      Math         RAG
-        Service      Service      Service     (Python)
-                                              ChromaDB
+```text
+Client (React)
+  -> Server (Express / Bun)
+     -> Planner Model Service (FastAPI)
+        -> /classify
+     -> Tool Execution
+        -> Weather API
+        -> Exchange API
+        -> Math service
+        -> Product KB search (/search_kb)
+     -> OpenAI generation
+  -> Chat UI response + model timing badges
 ```
 
-The orchestrator executes multi-step plans in parallel, then synthesizes a final answer using the results.
+## Tech Stack
 
----
-
-## Stack
-
-| Layer | Technology |
-|-------|-----------|
-| Runtime | [Bun](https://bun.sh) v1.3.5+ |
+| Layer | Tech |
+| --- | --- |
+| Runtime | Bun |
+| Frontend | React 19, Vite, TypeScript, Tailwind |
 | Backend | Express 5, TypeScript |
-| Frontend | React 19, Vite, Tailwind CSS |
-| LLM | OpenAI gpt-4o-mini / gpt-4.1 |
-| Vector DB | ChromaDB (Python / FastAPI) |
-| Embeddings | sentence-transformers `all-MiniLM-L6-v2` |
-| Classification | Ollama `qwen2.5:7b` |
-| Database | MySQL / MariaDB via Prisma |
-| Math | mathjs |
+| Model service | FastAPI, Python |
+| Product retrieval | ChromaDB |
+| General LLM generation | OpenAI |
+| Planner / routing | Ollama Qwen |
+| Database | Prisma + MySQL/MariaDB |
 
----
+## Repository Layout
 
-## Project Structure
-
-```
+```text
 chat-bot/
 ├── packages/
-│   ├── client/          # React frontend
-│   ├── server/          # Express API + services
+│   ├── client/
+│   │   └── src/components/chat/
+│   ├── server/
 │   │   ├── controllers/
-│   │   ├── services/
-│   │   │   ├── orchestrator.service.ts   # Plan execution engine
-│   │   │   ├── intent.service.ts         # Intent classification
-│   │   │   ├── productInformation.service.ts  # RAG
-│   │   │   ├── weather.service.ts
-│   │   │   ├── exchange.service.ts
-│   │   │   ├── math_translator.service.ts
-│   │   │   └── review.service.ts
-│   │   └── repositories/
-│   └── models/          # Python FastAPI server
-│       ├── search_kb.py # Serve: /classify + /search_kb
-│       └── index_kb.py  # Index product docs into ChromaDB
-├── data/
-│   └── products/        # .txt product knowledge base files
-└── .env
+│   │   ├── llm/
+│   │   ├── repositories/
+│   │   ├── routes/
+│   │   └── services/
+│   └── models/
+│       ├── kb/
+│       ├── tests/
+│       ├── search_kb.py
+│       └── system_instructions.json
+├── history/
+├── index.ts
+└── README.md
 ```
 
----
+## Prerequisites
 
-## Setup
-
-### Prerequisites
-
-- [Bun](https://bun.sh) v1.3.5+
+- Bun
+- Node-compatible local environment for the client build tooling
 - Python 3.10+
-- MySQL / MariaDB
-- [Ollama](https://ollama.ai) with `qwen2.5:7b` pulled
+- MySQL or MariaDB
+- Ollama with the planner model installed
+- OpenAI API key
+- OpenWeather API key
 
-### 1. Install dependencies
+## Environment
 
-```bash
-# From root
-bun install
-
-# Python dependencies
-cd packages/models
-pip install -r requirements.txt
-```
-
-### 2. Configure environment
-
-Create a `.env` file in the root:
+Create a root `.env` file:
 
 ```env
 OPENAI_API_KEY=sk-...
-WEATHER_API_KEY=...
+OPENWEATHER_API_KEY=...
 
-DATABASE_URL=mysql://root:admin@localhost:3306/review_summarizer
+DATABASE_URL=mysql://root:password@localhost:3306/chatbot
 DATABASE_USER=root
-DATABASE_PASSWORD=admin
-DATABASE_NAME=review_summarizer
+DATABASE_PASSWORD=password
+DATABASE_NAME=chatbot
 DATABASE_HOST=localhost
 DATABASE_PORT=3306
 
@@ -109,7 +99,22 @@ PORT=3000
 PYTHON_SERVER_URL=http://localhost:5001
 ```
 
-### 3. Set up the database
+## Install
+
+From the repo root:
+
+```bash
+bun install
+```
+
+For the Python model service:
+
+```bash
+cd packages/models
+pip install -r requirements.txt
+```
+
+## Database Setup
 
 ```bash
 cd packages/server
@@ -117,86 +122,110 @@ bunx prisma migrate dev
 bunx prisma generate
 ```
 
-### 4. Index the knowledge base
+## Run The App
+
+Start the Bun client/server dev processes from the repo root:
 
 ```bash
-cd packages/models
-python index_kb.py
-```
-
-### 5. Start all services
-
-```bash
-# Terminal 1 — Express server + React client
 bun run index.ts
-
-# Terminal 2 — Python RAG server
-cd packages/models
-uvicorn search_kb:app --port 5001
 ```
 
----
+Start the Python model service in a second terminal:
 
-## API Reference
+```bash
+cd packages/models
+uvicorn search_kb:app --host 127.0.0.1 --port 5001
+```
+
+## Main Endpoints
 
 ### Chat
 
-```bash
+```http
 POST /api/chat
-{ "prompt": "Weather in Paris and convert 100 USD to ILS", "conversationId": "abc" }
+Content-Type: application/json
 ```
 
-### Plan (debug)
+```json
+{
+  "prompt": "tell me about ferrari what is the weather in tel aviv and convert 10 sheqels to dollar",
+  "conversationId": "abc-123"
+}
+```
 
-```bash
+### Chat history
+
+```http
+POST /api/chat/history
+DELETE /api/chat/history
+```
+
+### Plan debug
+
+```http
 POST /api/plan/create
-{ "prompt": "Weather in Paris and convert 100 USD to ILS" }
 ```
 
-### Direct endpoints
+### Python model service
 
-```bash
-GET  /api/weather/:city
-GET  /api/calculate/:equation
-GET  /api/exchangerate/:target
-
-GET  /api/products/:id/reviews
-POST /api/products/:id/reviews/summarize
-
-POST /api/getMessages   { "conversationId": "abc" }
+```http
+POST http://localhost:5001/classify
+POST http://localhost:5001/search_kb
+POST http://localhost:5001/answer_kb
 ```
 
-### Python server
-
-```bash
-POST http://localhost:5001/classify   { "prompt": "Do you have laptops?" }
-POST http://localhost:5001/search_kb  { "query": "MacBook Pro specs", "n_results": 3 }
-```
-
----
+Note: the server currently uses `/classify` and `/search_kb` in the main product-answer flow. `/answer_kb` still exists on the Python side but is no longer the primary product path.
 
 ## Supported Intents
 
-| Intent | Example prompt |
-|--------|---------------|
-| `weather` | "What's the weather in Tokyo?" |
-| `exchange` | "Convert 50 EUR to USD" |
-| `calculate` | "What is 12 * (4 + 3)?" |
-| `products` | "Tell me about the MacBook Pro" |
-| `general` | "Tell me a joke" |
+- `weather`
+- `exchange`
+- `calculate`
+- `products`
+- `general`
 
-Multi-intent prompts are fully supported — the bot will run all relevant tools and combine the results.
+Mixed prompts are supported. The planner splits the message into separate steps and the orchestrator combines the results back into one answer.
 
----
+## Product Answering
 
-## Benchmarking
+Product requests now use a two-step flow:
 
-| Component | Model | Avg Response (ms) | Quality (1–5) | Cost |
-|-----------|-------|:-----------------:|:-------------:|:----:|
-| Router & Planning | Ollama (qwen2.5:7b) | ~21,000 | — | free |
-| Router & Planning (fallback) | OpenAI GPT-4o-mini | ~800 | 5 | $ |
-| General Chat | Ollama (qwen2.5:7b) | ~25,000 | — | free |
-| Review Sentiment | HuggingFace (Python) | — | 4–5 | free |
-| Review Analysis | OpenAI GPT-4o-mini | — | 5 | $ |
-| RAG Retrieval | HuggingFace (all-MiniLM-L6-v2) | ~200 | 5 | free |
-| RAG Generation | OpenAI GPT-4o-mini | ~15,000 | 5 | $ |
+1. Search the KB with `/search_kb`
+2. Send the retrieved chunks to OpenAI for final answer generation
+
+This keeps retrieval and answer generation separate and makes it easier to inspect timing and grounding.
+
+## Model Timing In UI
+
+Assistant messages can show per-model timing badges, for example:
+
+- planner model timing
+- product search KB timing
+- OpenAI generation timing
+
+Only timings already returned or measured by the current services are shown.
+
+## Test Summary
+
+The project includes a live check script at `scripts/check-project.ts`.
+
+It runs 10 real prompts against `POST /api/chat` and logs:
+
+- the prompt name
+- the response output
+- the end-to-end request time
+- the per-model timings returned by the app
+
+This is not a mocked test. If the server is not running, the requests fail.
+
+Run it from the repo root:
+
+```bash
+bun run scripts/check-project.ts
+```
+
+## Notes
+
+- Chat history is stored in the local `history/` folder with a short TTL.
+- The planner prompt lives in `packages/models/system_instructions.json`.
+- Product answer behavior is guided by `packages/server/prompts/rag_generation.txt` and `packages/models/product_answer_instructions.txt`.

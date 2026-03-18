@@ -1,5 +1,5 @@
 import { mkdir, unlink } from 'node:fs/promises';
-import type { GenerateTextResult } from '../llm/openAi/client.js';
+import type { GenerateTextResult, ModelTiming } from '../llm/openAi/client.js';
 
 const HISTORY_DIR = './history';
 const SESSION_TTL_MS = 5 * 60 * 1000;
@@ -9,6 +9,7 @@ export type Message = {
    id: string;
    role: 'user' | 'assistant';
    content: string;
+   modelTimings?: ModelTiming[];
 };
 
 export type Session = {
@@ -78,14 +79,20 @@ export const conversationRepository = {
       prompt: string,
       response: GenerateTextResult
    ): Promise<Session> {
-      return this.appendTurn(conversationId, prompt, response.text, response.id);
+      return this.appendTurn(
+         conversationId,
+         prompt,
+         response.text,
+         response.id
+      );
    },
 
    async appendTurn(
       conversationId: string,
       prompt: string,
       assistantMessage: string,
-      assistantMessageId: string = crypto.randomUUID()
+      assistantMessageId: string = crypto.randomUUID(),
+      modelTimings?: ModelTiming[]
    ): Promise<Session> {
       const session = await this.ensureSession(conversationId);
 
@@ -94,6 +101,7 @@ export const conversationRepository = {
          toAssistantMessage({
             id: assistantMessageId,
             text: assistantMessage,
+            modelTimings,
          })
       );
       session.expiresAt = createExpiresAt();
@@ -149,6 +157,7 @@ function toAssistantMessage(response: GenerateTextResult): Message {
       id: String(response.id),
       role: 'assistant',
       content: response.text,
+      modelTimings: response.modelTimings,
    };
 }
 

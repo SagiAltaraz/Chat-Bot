@@ -7,7 +7,11 @@ export const chatService = {
    async generateReply(
       prompt: string,
       conversationId: string
-   ): Promise<{ id: string; content: string }> {
+   ): Promise<{
+      id: string;
+      content: string;
+      modelTimings?: Message['modelTimings'];
+   }> {
       const isNewSession =
          !(await conversationRepository.hasSession(conversationId));
 
@@ -25,6 +29,7 @@ export const chatService = {
       return {
          id: response.id,
          content: response.text,
+         modelTimings: response.modelTimings,
       };
    },
 
@@ -40,6 +45,7 @@ export const chatService = {
          {
             id: response.id,
             text: response.content,
+            modelTimings: response.modelTimings,
          }
       );
 
