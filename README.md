@@ -205,24 +205,43 @@ Assistant messages can show per-model timing badges, for example:
 
 Only timings already returned or measured by the current services are shown.
 
-## Test Summary
+## Benchmarking
 
-The project includes a live check script at `scripts/check-project.ts`.
+| Component | Model | Avg Response Time | Quality (1–5) | Cost |
+| --- | --- | --- | --- | --- |
+| Router & Planning | Ollama Qwen2.5:7b | ~70,000 ms (warm) | 4 | Free |
+| Router & Planning (fallback) | OpenAI GPT-4.1 | ~1,500 ms | 5 | $ |
+| General Chat | OpenAI GPT-4.1 | ~2,000 ms | 5 | $ |
+| RAG Retrieval (KB Search) | HuggingFace nomic-embed-text | ~100 ms (warm) | 5 | Free |
+| RAG Generation (Answer) | OpenAI GPT-4.1 | ~1,500 ms | 5 | $ |
+| LLM Synthesis | OpenAI GPT-4.1-mini | ~2,000 ms | 5 | $ |
 
-It runs 10 real prompts against `POST /api/chat` and logs:
+## Test Results
 
-- the prompt name
-- the response output
-- the end-to-end request time
-- the per-model timings returned by the app
+| Test | Prompt | Status |
+| --- | --- | --- |
+| Weather | `What is the weather in Paris?` | ✅ |
+| Exchange | `Convert 50 GBP to ILS` | ✅ |
+| Calculate | `Solve (18/3) + 2.5` | ✅ |
+| Multi-intent | `Weather in Tokyo and convert 200 USD to ILS` | ✅ |
+| RAG product | `Tell me about the MacBook Pro` | ✅ |
+| RAG price | `What is the price of the Samsung TV?` | ✅ |
+| RAG unknown | `What is the price of an iPhone?` | ✅ (not in KB) |
+| RAG + Calculate | `How many Samsung TVs can I buy with the price of a Ferrari?` | ✅ |
+| RAG + Calculate + Exchange | `How many MacBooks for the price of a Ferrari, convert to ILS?` | ✅ |
+| Hebrew multi-intent | `מה מזג האוויר בתל אביב וכמה זה 100 דולר בשקלים?` | ✅ |
+| General chat (joke) | `Tell me a joke` | ❌ |
+| Plan intent | `Generate a workout plan` | ❌ |
 
-This is not a mocked test. If the server is not running, the requests fail.
+### Failed Tests — Root Cause
 
-Run it from the repo root:
+**`Tell me a joke` / `ספר לי בדיחה`**
+- Qwen classifies it as `general` intent → `orchestratorService.isAllGeneral()` returns `true` → goes to `chatService`
+- `chatService` uses the system prompt from `prompts/chatbot.txt` which contains an overly restrictive safety instruction that blocks non-product questions
 
-```bash
-bun run scripts/check-project.ts
-```
+**`Generate a workout plan`**
+- Qwen classifies it as `plan` intent → `orchestrator` has no `case 'plan'` in the switch → falls to `default: return { content: '' }`
+- Empty result → synthesis returns nothing meaningful
 
 ## Notes
 

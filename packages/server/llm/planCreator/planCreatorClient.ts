@@ -4,8 +4,8 @@ export interface PlanParameters {
    city?: string;
    from?: string;
    to?: string;
-   amount?: number;
-   equation?: string;
+   amount?: number | string; // supports <price_of_N> references
+   equation?: string; // supports <price_of_N> references
    product_name?: string;
    query?: string;
 }

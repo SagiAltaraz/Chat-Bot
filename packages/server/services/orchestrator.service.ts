@@ -15,6 +15,40 @@ type StepExecutionResult = {
    modelTimings?: ModelTiming[];
 };
 
+function extractPrice(text: string): number | null {
+   const match = text.match(/\$([0-9][0-9,]*)/);
+   return match ? Number(match[1].replace(/,/g, '')) : null;
+}
+
+function resolveParams(
+   step: PlanStep,
+   completedResults: StepExecutionResult[]
+): PlanStep {
+   const priceRefPattern = /<price_of_(\d+)>/g;
+
+   function resolve(value: string): string {
+      return value.replace(priceRefPattern, (_, indexStr) => {
+         const result = completedResults[Number(indexStr) - 1] ?? null;
+         const price = result ? extractPrice(result.content) : null;
+         return price !== null ? String(price) : '0';
+      });
+   }
+
+   const p = step.parameters;
+   return {
+      ...step,
+      parameters: {
+         ...p,
+         ...(typeof p.equation === 'string' && {
+            equation: resolve(p.equation),
+         }),
+         ...(typeof p.amount === 'string' && {
+            amount: Number(resolve(p.amount)),
+         }),
+      },
+   };
+}
+
 async function executeStep(
    step: PlanStep,
    conversationId: string
@@ -73,7 +107,8 @@ export const orchestratorService = {
    ): Promise<{ content: string; modelTimings?: ModelTiming[] }> {
       const stepResults: StepExecutionResult[] = [];
       for (const step of plan.plan) {
-         stepResults.push(await executeStep(step, conversationId));
+         const resolved = resolveParams(step, stepResults);
+         stepResults.push(await executeStep(resolved, conversationId));
       }
 
       let enrichedSynthesis = plan.final_answer_synthesis;
