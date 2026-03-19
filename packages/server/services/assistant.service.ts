@@ -38,7 +38,8 @@ export const assistantService = {
 
       const finalAnswer = await orchestratorService.executePlan(
          planResult.plan,
-         conversationId
+         conversationId,
+         prompt
       );
 
       await conversationRepository.appendTurn(

@@ -25,7 +25,11 @@ export const productInformationService = {
       const response = await fetch(`${PYTHON_URL}/search_kb`, {
          method: 'POST',
          headers: { 'Content-Type': 'application/json' },
-         body: JSON.stringify({ query: searchQuery, n_results: 3 }),
+         body: JSON.stringify({
+            query: searchQuery,
+            n_results: 3,
+            product_name: productName,
+         }),
       });
 
       if (!response.ok) {

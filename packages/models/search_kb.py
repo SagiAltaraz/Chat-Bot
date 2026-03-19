@@ -39,6 +39,7 @@ def with_response_time(payload: dict, started_at: float) -> dict:
 class SearchRequest(BaseModel):
     query: str
     n_results: int = 3
+    product_name: str | None = None
 
 
 # Request body for concise KB answering based on the best semantic match.
@@ -110,7 +111,7 @@ def search_kb(req: SearchRequest):
         return with_response_time({"results": []}, started_at)
 
     # Query the vector store and return the nearest matching chunks.
-    results = search_product_chunks(req.query, product_collection, req.n_results)
+    results = search_product_chunks(req.query, product_collection, req.n_results, req.product_name)
     logger.info("search_kb returned %s matches", len(results))
     return with_response_time({"results": results}, started_at)
 

@@ -3,6 +3,7 @@ import { exchangeService } from './exchange.service.js';
 import { mathTranslatorService } from './math_translator.service.js';
 import { productInformationService } from './productInformation.service.js';
 import { chatService } from './chat.service.js';
+import { llmClient } from '../llm/openAi/client.js';
 import type {
    PlanResponse,
    PlanStep,
@@ -67,28 +68,37 @@ export const orchestratorService = {
 
    async executePlan(
       plan: PlanResponse,
-      conversationId: string
+      conversationId: string,
+      originalPrompt?: string
    ): Promise<{ content: string; modelTimings?: ModelTiming[] }> {
       const stepResults: StepExecutionResult[] = [];
       for (const step of plan.plan) {
          stepResults.push(await executeStep(step, conversationId));
       }
 
-      let finalAnswer = plan.final_answer_synthesis;
+      let enrichedSynthesis = plan.final_answer_synthesis;
       for (let i = 0; i < stepResults.length; i++) {
          if (stepResults[i]?.content) {
-            finalAnswer = finalAnswer.replaceAll(
+            enrichedSynthesis = enrichedSynthesis.replaceAll(
                `<result_from_tool_${i + 1}>`,
                stepResults[i]!.content
             );
          }
       }
 
-      // Remove any unreplaced placeholders (e.g. from empty general steps)
-      const content = finalAnswer
+      enrichedSynthesis = enrichedSynthesis
          .replace(/<result_from_tool_\d+>\./g, '')
          .replace(/<result_from_tool_\d+>/g, '')
          .trim();
+
+      const synthesis = await llmClient.generateText({
+         model: 'gpt-4.1-mini',
+         instructions:
+            'You are a helpful assistant. You receive collected data from various tools. Use it to answer the user question clearly and concisely. Perform any arithmetic needed.',
+         prompt: `User question: ${originalPrompt ?? enrichedSynthesis}\n\nCollected data: ${enrichedSynthesis}`,
+         temperature: 0.1,
+         maxTokens: 200,
+      });
 
       const modelTimings = [
          ...(typeof plan.response_time_ms === 'number'
@@ -100,10 +110,11 @@ export const orchestratorService = {
               ]
             : []),
          ...stepResults.flatMap((result) => result.modelTimings ?? []),
+         ...(synthesis.modelTimings ?? []),
       ];
 
       return {
-         content,
+         content: synthesis.text.trim(),
          modelTimings: modelTimings.length ? modelTimings : undefined,
       };
    },

@@ -63,15 +63,33 @@ def sync_product_collection(
     return collection, len(product_chunks)
 
 
+def _resolve_source(product_name: str, collection: Any) -> str | None:
+    """Find the source filename whose stem best matches a product name keyword."""
+    all_meta = collection.get(include=["metadatas"])["metadatas"]
+    sources = {m["source"] for m in all_meta if m and "source" in m}
+    words = [w.lower() for w in product_name.split() if len(w) > 2]
+    for source in sources:
+        stem = source.lower().replace("_", " ").replace("-", " ")
+        if any(w in stem for w in words):
+            return source
+    return None
+
+
 def search_product_chunks(
-    query: str, collection: Any, n_results: int = 3
+    query: str, collection: Any, n_results: int = 3, product_name: str | None = None
 ) -> list[dict]:
     """Run semantic retrieval in Chroma and return normalized chunk matches."""
-    # Run semantic similarity search in Chroma and normalize the response shape.
+    where = None
+    if product_name:
+        source = _resolve_source(product_name, collection)
+        if source:
+            where = {"source": source}
+
     result = collection.query(
         query_texts=[query],
         n_results=n_results,
         include=["documents", "metadatas", "distances"],
+        where=where,
     )
 
     documents = result.get("documents", [[]])[0]

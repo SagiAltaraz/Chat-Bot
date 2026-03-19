@@ -12,6 +12,9 @@ The laptop features a high-resolution Retina display with accurate colors and hi
 Connectivity and Operating System
 MacBook Pro includes multiple Thunderbolt ports for external displays and storage devices. It runs macOS, which provides a secure operating system with strong privacy features and integration with other Apple devices.
 
+Pricing
+The MacBook Pro 14-inch starts at $1,999. The MacBook Pro 16-inch starts at $2,499. Higher-end configurations with M4 Max chip reach up to $3,999.
+
 Common Questions
 The MacBook Pro is suitable for professional video editing and software development. It is less focused on gaming compared to traditional gaming laptops.
 
