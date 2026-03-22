@@ -17,7 +17,7 @@ type StepExecutionResult = {
 
 function extractPrice(text: string): number | null {
    const match = text.match(/\$([0-9][0-9,]*)/);
-   return match ? Number(match[1].replace(/,/g, '')) : null;
+   return match && match[1] ? Number(match[1].replace(/,/g, '')) : null;
 }
 
 function resolveParams(
