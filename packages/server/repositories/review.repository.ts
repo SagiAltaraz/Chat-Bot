@@ -13,6 +13,17 @@ export const reviewRepository = {
       });
    },
 
+   createReview(data: {
+      author: string;
+      rating: number;
+      content: string;
+      productId: number;
+   }) {
+      return prisma.review.create({
+         data,
+      });
+   },
+
    storeReviewSummary(productId: number, summary: string) {
       const expiresAt = dayjs().add(7, 'days').toDate();
       return prisma.summary.upsert({

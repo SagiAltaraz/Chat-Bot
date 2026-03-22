@@ -1,19 +1,35 @@
 import { llmClient } from '../llm/openAi/client.js';
-import ragPrompt from '../prompts/rag_generation.txt';
+import type { ModelTiming } from '../llm/openAi/client.js';
+import ragGenerationPrompt from '../prompts/rag_generation.txt';
 
 const PYTHON_URL = process.env.PYTHON_SERVER_URL || 'http://localhost:5001';
+
+type SearchKbMatch = {
+   text: string;
+   distance: number;
+   source: string | null;
+};
+
+export type ProductInformationResult = {
+   content: string;
+   modelTimings?: ModelTiming[];
+};
 
 export const productInformationService = {
    async getProductInformation(
       productName: string,
       query: string
-   ): Promise<string> {
+   ): Promise<ProductInformationResult> {
       const searchQuery = [productName, query].filter(Boolean).join(' ');
 
       const response = await fetch(`${PYTHON_URL}/search_kb`, {
          method: 'POST',
          headers: { 'Content-Type': 'application/json' },
-         body: JSON.stringify({ query: searchQuery, n_results: 3 }),
+         body: JSON.stringify({
+            query: searchQuery,
+            n_results: 3,
+            product_name: productName,
+         }),
       });
 
       if (!response.ok) {
@@ -21,25 +37,63 @@ export const productInformationService = {
       }
 
       const data = (await response.json()) as {
-         results: Array<{ text: string; distance: number }>;
+         results?: SearchKbMatch[];
+         response_time_ms?: number;
       };
 
-      // Filter out chunks that are too far from the query (distance > 1.0)
-      const relevant = data.results.filter((r) => r.distance < 1.0);
-      const context = (
-         relevant.length > 0 ? relevant : data.results.slice(0, 1)
-      )
-         .map((r) => r.text)
-         .join('\n\n');
+      const matches = data.results ?? [];
+      if (!matches.length) {
+         return {
+            content: 'We do not have a matching product in the knowledge base.',
+            modelTimings: toModelTimings(data.response_time_ms),
+         };
+      }
 
-      const result = await llmClient.generateText({
-         model: 'gpt-4o-mini',
-         instructions: `${ragPrompt}\n\nContext:\n${context}`,
-         prompt: query || `Tell me about ${productName}`,
+      const context = buildContext(matches);
+      const prompt = [
+         `User question: ${query || productName}`,
+         `Product name: ${productName || 'Unknown'}`,
+         '',
+         'Retrieved product context:',
+         context,
+      ].join('\n');
+
+      const generation = await llmClient.generateText({
+         model: 'gpt-4.1',
+         instructions: ragGenerationPrompt,
+         prompt,
          temperature: 0.2,
-         maxTokens: 300,
+         maxTokens: 200,
       });
 
-      return result.text;
+      return {
+         content: generation.text.trim(),
+         modelTimings: [
+            ...(toModelTimings(data.response_time_ms) ?? []),
+            ...(generation.modelTimings ?? []),
+         ],
+      };
    },
 };
+
+function buildContext(matches: SearchKbMatch[]): string {
+   return matches
+      .map(
+         (match, index) =>
+            `Match ${index + 1}:\nSource: ${match.source ?? 'unknown'}\nContent: ${match.text}`
+      )
+      .join('\n\n');
+}
+
+function toModelTimings(responseTimeMs?: number): ModelTiming[] | undefined {
+   if (typeof responseTimeMs !== 'number') {
+      return undefined;
+   }
+
+   return [
+      {
+         model: 'Product Search KB',
+         responseTimeMs,
+      },
+   ];
+}

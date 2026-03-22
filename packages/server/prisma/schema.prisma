@@ -17,7 +17,7 @@ model Product {
   id          Int      @id @default(autoincrement())
   name        String   @db.VarChar(255)
   description String?  @db.Text
-  price       Int      @map("difficulty") @db.TinyInt
+  price       Int      @db.TinyInt
   reviews     Review[]
   summaries   Summary?
 

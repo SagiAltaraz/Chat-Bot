@@ -4,8 +4,8 @@ export interface PlanParameters {
    city?: string;
    from?: string;
    to?: string;
-   amount?: number;
-   equation?: string;
+   amount?: number | string; // supports <price_of_N> references
+   equation?: string; // supports <price_of_N> references
    product_name?: string;
    query?: string;
 }
@@ -18,6 +18,7 @@ export interface PlanStep {
 export interface PlanResponse {
    plan: PlanStep[];
    final_answer_synthesis: string;
+   response_time_ms?: number;
 }
 
 export const planCreatorClient = {

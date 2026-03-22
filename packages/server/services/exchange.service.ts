@@ -3,7 +3,7 @@ import { exchangeRepository } from '../repositories/exchange.repository';
 
 type ExchangeParams = {
    from?: string;
-   to?: string;
+   to?: string | string[];
    target?: string;
    amount?: number | null;
 };

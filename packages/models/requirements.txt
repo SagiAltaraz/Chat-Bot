@@ -1,5 +1,4 @@
 fastapi
 uvicorn
+ollama
 chromadb
-sentence-transformers
-torch

@@ -1,28 +1,52 @@
 import { conversationRepository } from '../repositories/conversation.repository';
-import template from '../prompts/chatbot.txt';
-import projectInfo from '../prompts/neuroStep.txt';
 import { llmClient } from '../llm/openAi/client.js';
 import type { Message } from '../repositories/conversation.repository';
-const instructions = template.replace('{{projectInfo}}', projectInfo);
+import instructions from '../prompts/instructions.txt';
 
 export const chatService = {
-   async sendMessage(
+   async generateReply(
       prompt: string,
       conversationId: string
-   ): Promise<Message | undefined> {
+   ): Promise<{
+      id: string;
+      content: string;
+      modelTimings?: Message['modelTimings'];
+   }> {
+      const isNewSession =
+         !(await conversationRepository.hasSession(conversationId));
+
       const response = await llmClient.generateText({
          model: 'gpt-4o-mini',
          instructions,
          prompt,
          temperature: 0.2,
          maxTokens: 200,
-         previouseResponceId:
-            conversationRepository.getLastResponseId(conversationId),
+         previouseResponceId: isNewSession
+            ? undefined
+            : conversationRepository.getLastResponseId(conversationId),
       });
-      const session = await conversationRepository.saveSession(
+
+      return {
+         id: response.id,
+         content: response.text,
+         modelTimings: response.modelTimings,
+      };
+   },
+
+   async sendMessage(
+      prompt: string,
+      conversationId: string
+   ): Promise<Message | undefined> {
+      const response = await this.generateReply(prompt, conversationId);
+      conversationRepository.setLastResponseId(conversationId, response.id);
+      const session = await conversationRepository.appendMessage(
          conversationId,
          prompt,
-         response
+         {
+            id: response.id,
+            text: response.content,
+            modelTimings: response.modelTimings,
+         }
       );
 
       return session.messages.assistant[session.messages.assistant.length - 1];

@@ -5,7 +5,7 @@ node_modules
 out
 dist
 *.tgz
-/history
+history
 
 # code coverage
 coverage
@@ -36,6 +36,7 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 packages/server/generated/prisma
 
 # Python
+.venv311/
 venv/
 .venv/
 __pycache__/

@@ -4,6 +4,7 @@ import TypingIndicator from './TypingIndicator';
 import { ChatMessages, type Message } from './ChatMessages';
 import { ChatInput } from './ChatInput';
 import type { ChatFormData } from './ChatInput';
+import { Button } from '@/components/ui/button';
 import popSound from '@/assets/sounds/pop.mp3';
 import notificationSound from '@/assets/sounds/notification.mp3';
 import Cookies from 'js-cookie';
@@ -15,41 +16,50 @@ const notificationAudio = new Audio(notificationSound);
 notificationAudio.volume = 0.2;
 
 type ChatResponse = {
-   message: string;
+   message?: string;
+   modelTimings?: Message['modelTimings'];
+};
+
+type HistoryResponse = {
+   messages: Message[];
 };
 
 const ChatBot = () => {
    const [messages, setMessages] = useState<Message[]>([]);
    const [isBotTyping, setIsBotTyping] = useState<boolean>(false);
    const [error, setError] = useState<string | null>(null);
-   const cookies = Cookies.get('conversationId');
-   const conversationId = cookies
-      ? useRef(cookies)
-      : useRef(crypto.randomUUID());
+   const conversationId = useRef(
+      Cookies.get('conversationId') ?? crypto.randomUUID()
+   );
 
    useEffect(() => {
-      if (!cookies) {
-         return;
-      }
+      Cookies.set('conversationId', conversationId.current, { expires: 30 });
+   }, []);
+
+   useEffect(() => {
       let ignore = false;
+
       async function fetchMessages() {
-         const cookie = Cookies.get('conversationId');
-         const data = await axios.post<Message[], any, {}>('/api/getMessages', {
-            conversationId: cookie,
-         });
-         if (!ignore) return;
+         try {
+            const { data } = await axios.post<HistoryResponse>(
+               '/api/chat/history',
+               {
+                  conversationId: conversationId.current,
+               }
+            );
 
-         for (let index = 0; index < data.data.botMessages.length; index++) {
-            console.log(index);
+            if (ignore) {
+               return;
+            }
 
-            setMessages((prev) => [
-               ...prev,
-               { content: data.data.userMessages[index].content, role: 'user' },
-               { content: data.data.botMessages[index].content, role: 'bot' },
-            ]);
+            setMessages(data.messages);
+         } catch (error) {
+            console.error(error);
          }
       }
+
       fetchMessages();
+
       return () => {
          ignore = true;
       };
@@ -69,7 +79,11 @@ const ChatBot = () => {
 
          setMessages((prev) => [
             ...prev,
-            { content: data.message, role: 'bot' },
+            {
+               content: data.message ?? '',
+               role: 'bot',
+               modelTimings: data.modelTimings,
+            },
          ]);
          setIsBotTyping(false);
          notificationAudio.play();
@@ -81,8 +95,34 @@ const ChatBot = () => {
       }
    };
 
+   const clearChat = async () => {
+      try {
+         await axios.delete('/api/chat/history', {
+            data: { conversationId: conversationId.current },
+         });
+      } catch (error) {
+         console.error(error);
+      } finally {
+         conversationId.current = crypto.randomUUID();
+         Cookies.set('conversationId', conversationId.current, { expires: 30 });
+         setMessages([]);
+         setError(null);
+      }
+   };
+
    return (
       <div className="flex flex-col h-full">
+         <div className="mb-4 flex items-center justify-between">
+            <p className="text-sm text-muted-foreground">Chat history</p>
+            <Button
+               type="button"
+               variant="outline"
+               size="sm"
+               onClick={clearChat}
+            >
+               Clear chat
+            </Button>
+         </div>
          <div className="flex flex-col flex-1 gap-3 mb-10 overflow-y-auto">
             <ChatMessages messages={messages} />
             {isBotTyping && <TypingIndicator />}

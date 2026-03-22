@@ -3,21 +3,62 @@ import { exchangeService } from './exchange.service.js';
 import { mathTranslatorService } from './math_translator.service.js';
 import { productInformationService } from './productInformation.service.js';
 import { chatService } from './chat.service.js';
+import { llmClient } from '../llm/openAi/client.js';
 import type {
    PlanResponse,
    PlanStep,
 } from '../repositories/plan.repository.js';
+import type { ModelTiming } from '../llm/openAi/client.js';
+
+type StepExecutionResult = {
+   content: string;
+   modelTimings?: ModelTiming[];
+};
+
+function extractPrice(text: string): number | null {
+   const match = text.match(/\$([0-9][0-9,]*)/);
+   return match && match[1] ? Number(match[1].replace(/,/g, '')) : null;
+}
+
+function resolveParams(
+   step: PlanStep,
+   completedResults: StepExecutionResult[]
+): PlanStep {
+   const priceRefPattern = /<price_of_(\d+)>/g;
+
+   function resolve(value: string): string {
+      return value.replace(priceRefPattern, (_, indexStr) => {
+         const result = completedResults[Number(indexStr) - 1] ?? null;
+         const price = result ? extractPrice(result.content) : null;
+         return price !== null ? String(price) : '0';
+      });
+   }
+
+   const p = step.parameters;
+   return {
+      ...step,
+      parameters: {
+         ...p,
+         ...(typeof p.equation === 'string' && {
+            equation: resolve(p.equation),
+         }),
+         ...(typeof p.amount === 'string' && {
+            amount: Number(resolve(p.amount)),
+         }),
+      },
+   };
+}
 
 async function executeStep(
    step: PlanStep,
    conversationId: string
-): Promise<string> {
+): Promise<StepExecutionResult> {
    switch (step.intent) {
       case 'weather': {
          const weather = await weatherService.recieveWeather(
             String(step.parameters.city)
          );
-         return `${weather.temperature} degrees`;
+         return { content: `${weather.temperature} degrees` };
       }
       case 'exchange': {
          const result = await exchangeService.getExchangeRate({
@@ -25,12 +66,14 @@ async function executeStep(
             to: String(step.parameters.to),
             amount: Number(step.parameters.amount),
          });
-         return `${result.result}`;
+         return { content: `${result.result}` };
       }
       case 'calculate': {
-         return await mathTranslatorService.calculateFromPrompt(
-            step.parameters.equation ?? ''
-         );
+         return {
+            content: await mathTranslatorService.calculateFromPrompt(
+               step.parameters.equation ?? ''
+            ),
+         };
       }
       case 'products': {
          return await productInformationService.getProductInformation(
@@ -40,12 +83,15 @@ async function executeStep(
       }
       case 'general': {
          const query = String(step.parameters.query ?? '');
-         if (!query) return '';
-         const response = await chatService.sendMessage(query, conversationId);
-         return response?.content ?? '';
+         if (!query) return { content: '' };
+         const response = await chatService.generateReply(
+            query,
+            conversationId
+         );
+         return { content: response.content };
       }
       default:
-         return '';
+         return { content: '' };
    }
 }
 
@@ -56,27 +102,55 @@ export const orchestratorService = {
 
    async executePlan(
       plan: PlanResponse,
-      conversationId: string
-   ): Promise<string> {
-      const stepResults: string[] = [];
+      conversationId: string,
+      originalPrompt?: string
+   ): Promise<{ content: string; modelTimings?: ModelTiming[] }> {
+      const stepResults: StepExecutionResult[] = [];
       for (const step of plan.plan) {
-         stepResults.push(await executeStep(step, conversationId));
+         const resolved = resolveParams(step, stepResults);
+         stepResults.push(await executeStep(resolved, conversationId));
       }
 
-      let finalAnswer = plan.final_answer_synthesis;
+      let enrichedSynthesis = plan.final_answer_synthesis;
       for (let i = 0; i < stepResults.length; i++) {
-         if (stepResults[i]) {
-            finalAnswer = finalAnswer.replaceAll(
+         if (stepResults[i]?.content) {
+            enrichedSynthesis = enrichedSynthesis.replaceAll(
                `<result_from_tool_${i + 1}>`,
-               stepResults[i]!
+               stepResults[i]!.content
             );
          }
       }
 
-      // Remove any unreplaced placeholders (e.g. from empty general steps)
-      return finalAnswer
+      enrichedSynthesis = enrichedSynthesis
          .replace(/<result_from_tool_\d+>\./g, '')
          .replace(/<result_from_tool_\d+>/g, '')
          .trim();
+
+      const synthesis = await llmClient.generateText({
+         model: 'gpt-4.1-mini',
+         instructions:
+            'You are a helpful assistant. You receive collected data from various tools. Use it to answer the user question clearly and concisely. Perform any arithmetic needed.',
+         prompt: `User question: ${originalPrompt ?? enrichedSynthesis}\n\nCollected data: ${enrichedSynthesis}`,
+         temperature: 0.1,
+         maxTokens: 200,
+      });
+
+      const modelTimings = [
+         ...(typeof plan.response_time_ms === 'number'
+            ? [
+                 {
+                    model: 'Planner Model',
+                    responseTimeMs: plan.response_time_ms,
+                 },
+              ]
+            : []),
+         ...stepResults.flatMap((result) => result.modelTimings ?? []),
+         ...(synthesis.modelTimings ?? []),
+      ];
+
+      return {
+         content: synthesis.text.trim(),
+         modelTimings: modelTimings.length ? modelTimings : undefined,
+      };
    },
 };

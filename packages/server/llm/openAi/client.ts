@@ -16,9 +16,15 @@ type GenerateTextOptions = {
    };
 };
 
+export type ModelTiming = {
+   model: string;
+   responseTimeMs: number;
+};
+
 export type GenerateTextResult = {
    id: string;
    text: string;
+   modelTimings?: ModelTiming[];
 };
 
 export const llmClient = {
@@ -31,6 +37,7 @@ export const llmClient = {
       previouseResponceId,
       textFormat,
    }: GenerateTextOptions): Promise<GenerateTextResult> {
+      const startedAt = Date.now();
       const response = await client.responses.create({
          model,
          input: prompt,
@@ -40,9 +47,17 @@ export const llmClient = {
          previous_response_id: previouseResponceId,
          ...(textFormat ? { text: { format: textFormat } } : {}),
       } as any);
+      const responseTimeMs = Date.now() - startedAt;
+
       return {
          id: response.id,
          text: response.output_text,
+         modelTimings: [
+            {
+               model: `OpenAI ${model}`,
+               responseTimeMs,
+            },
+         ],
       };
    },
 };

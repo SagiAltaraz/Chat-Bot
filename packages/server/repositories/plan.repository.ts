@@ -36,7 +36,6 @@ export const planRepository = {
          }
 
          const plan = await planCreatorClient.createPlan(request.prompt);
-         //console.log('Plan created:', plan);
          return {
             success: true,
             plan,
